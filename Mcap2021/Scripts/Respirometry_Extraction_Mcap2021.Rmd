@@ -93,7 +93,7 @@ Load in the sample information file. It is important to have chambers in the ord
 Sample.Info<-read.csv("Mcap2021/Data/Respiration/Resp_Sample_Info.csv") #information on life stage, number of individuals, runs, etc.
 rename <- Sample.Info$Chamber.ID
 samp <- Sample.Info$Sample.ID
-run <- str_sub(file.names, 23, 26) #grab run from file name
+run <- str_sub(file.names, 10, 13) #grab run from file name
 date <- str_sub(file.names, 1, str_length(file.names)-29) #grab date from file name
 
 #load in respiration start times as a list the same length as the number of files
