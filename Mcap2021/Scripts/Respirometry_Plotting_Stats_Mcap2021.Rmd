@@ -209,7 +209,7 @@ ggsave(filename="Mcap2021/Figures/Respiration/respirometry_fig.png", plot=full_f
 
 Build linear mixed effect model and examine for Respiration.      
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run), data=PRdata) #run as random
+Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
 anova(Rmodel1, type="II")
 summary(Rmodel1)
 ```
@@ -233,7 +233,7 @@ cld(emm)
 
 Build linear mixed effect model and examine for Photosynthesis       
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-lmer(P.nmol.org.min~Treatment*Temperature + (1|Run), data=PRdata) #run nested within day
+Pmodel1<-lmer(P.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
 anova(Pmodel1, type="II")
 summary(Pmodel1)
 ```
@@ -257,7 +257,7 @@ cld(emm)
 
 Build linear mixed effect model and examine for GP       
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-lmer(GP.nmol.org.min~Treatment*Temperature + (1|Run), data=PRdata) #run nested within day
+GPmodel1<-lmer(GP.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
 anova(GPmodel1, type="II")
 summary(GPmodel1)
 ```
@@ -280,7 +280,7 @@ cld(emm)
  
 Build linear mixed effect model and examine for PR ratio       
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-lmer(ratio~Treatment*Temperature + (1|Run), data=PRdata) #run as random
+PRmodel1<-lmer(ratio~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
 anova(PRmodel1, type="II")
 summary(PRmodel1)
 ```

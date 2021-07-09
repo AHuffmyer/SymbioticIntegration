@@ -1,0 +1,74 @@
+---
+title: "Temperature analysis"
+author: "Ariana S Huffmyer"
+date: "6/24/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Set Up  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+library("car") #levenes test
+library("ggplot2") #plotting
+library("plotrix") #plotting
+library("reshape2") #data shaping
+require("gridExtra") #Arrange Plots for output
+require("plyr") #for ddply
+require("dplyr")
+require("utils")
+library("tidyverse")
+library("lubridate")
+library("scales")
+```
+
+Temperature treatments during experiment.  
+
+Plot temperature data from loggers in conicals and view averages of each treatment (Script and data from Hancock et al. 2021).  
+
+```{r}
+temps<-read.csv("Mcap2021/Data/Environmental/Temperature/Temperatures.csv")
+
+temps<-temps%>%
+  filter(!Temp>35)%>% #remove artifical values
+  filter(!Temp<24) #remove artifical values
+
+temps$DateTime<-as.POSIXct(temps$DateTime, format="%m/%d/%y %H:%M")
+
+temp_plot<-ggplot(temps)+
+    geom_vline(xintercept=as.numeric(temps$DateTime[2000]), linetype="dashed", color="black", size=0.75)+
+     geom_vline(xintercept=as.numeric(temps$DateTime[5500]), linetype="solid", color="black", size=0.75)+
+    geom_point(aes(DateTime,Temp,color=Treatment),alpha=0.3,size=1)+
+     scale_color_manual(values=c("blue","red"))+
+     geom_smooth(aes(DateTime,Temp,color=Treatment),se=FALSE,span=0.15,size=1)+
+     scale_x_datetime(date_breaks="2 days",minor_breaks=waiver(),labels=date_format("%m-%d"))+
+     ylim(24.5, 32)+
+     ylab(expression(bold("Temperature (°C)")))+
+     xlab(expression(bold("Date")))+
+     theme_classic() + 
+     theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); temp_plot
+
+temps%>%group_by(Treatment)%>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
+
+ggsave(filename="Mcap2021/Figures/Temperatures.png", plot=temp_plot, dpi=500, width=8.5, height=5, units="in")
+```
+
+
+
+
+
+
+
+
+
+
+
+

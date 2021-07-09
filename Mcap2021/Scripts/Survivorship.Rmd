@@ -1,0 +1,109 @@
+---
+title: Larval respirometry survival analysis and plotting
+author: "AS Huffmyer"
+date: '2021'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiontic Integration 2021 survival data. 
+
+# **Setup**  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('effects')
+library('emmeans')
+library('multcomp')
+```
+
+# **Plotting**  
+
+Load dataset, collected as larval concentration over time.  
+
+```{r}
+survival<-read.csv("Mcap2021/Data/Survivorship.csv")
+
+survival$Date<-as.factor(survival$Date)
+```
+
+Plot data as mean larval concentration over time.  
+
+```{r}
+surv_plot<-survival %>%
+    group_by(Timepoint, Treatment)%>%
+    summarise(mean=mean(Larvae.per.mL), sd=sd(Larvae.per.mL), N=length(Larvae.per.mL), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Timepoint), y = mean, group=interaction(Timepoint, Treatment))) +
+    geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
+    geom_point(aes(fill=Treatment, group=interaction(Treatment, Timepoint)), pch = 21, size=6, position = position_dodge(0.2)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Timepoint)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
+    xlab("Timepoint") + 
+    scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("Larvae mL" ^-1)))) +
+    ylim(0.5, 1.5)+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); surv_plot
+
+ggsave("Mcap2021/Figures/Survival.png", surv_plot, dpi=300, w=8.5, h=5, units="in")
+```
+
+# **Analysis**  
+
+Build linear mixed effect model and examine for survival.        
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+survmodel<-lmer(Larvae.per.mL~Treatment*Timepoint + (1|Tank), data=survival) #run as random
+anova(survmodel, type="II")
+summary(survmodel)
+```
+
+Check assumptions of model for residual normality and variance. Passes assumptions.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(survmodel))
+leveneTest(residuals(survmodel)~Treatment*Timepoint, data=survival)
+```
+
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(survmodel, ~Treatment|Timepoint)
+cld(emm)
+```
