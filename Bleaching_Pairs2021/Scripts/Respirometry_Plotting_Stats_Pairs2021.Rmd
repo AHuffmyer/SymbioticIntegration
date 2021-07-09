@@ -1,0 +1,340 @@
+---
+title: Larval respirometry (photosynthesis & respiration) analysis and plotting
+author: "AS Huffmyer"
+date: '2021'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiontic Integration 2021 respirometry data. 
+
+# **Setup**  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('effects')
+library('emmeans')
+library('multcomp')
+```
+
+
+# **Data visualization and manipulation**  
+
+Load data from LoLinR.    
+```{r, warning=FALSE, message=FALSE}
+PRdata<-read.csv("Bleaching_Pairs2021/Output/Respiration/oxygen_P_R_calc.csv") #load data
+```
+
+Separate project specific data.  
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+PRdata<-PRdata[!is.na(PRdata$Type),]
+
+#format columns
+PRdata$Temperature<-as.factor(PRdata$Temperature)
+PRdata$Plate<-as.factor(PRdata$Plate)
+PRdata$Run<-as.factor(PRdata$Run)
+PRdata$Date<-as.factor(PRdata$Date)
+```
+
+Calculate a P:R ratio using gross photosynthesis.  
+```{r, warning=FALSE, message=FALSE}
+PRdata$ratio<-abs(PRdata$GP.nmol.org.min)/abs(PRdata$R.nmol.org.min) #calculate ratio with absolute values
+#remove outliers detected by values of P:R ratio data
+boxplot(PRdata$ratio)
+#PRdata<-PRdata%>%filter(ratio < 10)
+#boxplot(PRdata$ratio)
+```
+
+# **Analysis and plotting of core dataset**  
+
+## Respiration  
+
+Plot data as box plots 
+```{r}
+r_plot<-PRdata %>%
+    group_by(Cross, Temperature)%>%
+    summarise(mean=mean(R.nmol.org.min), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Cross), y = mean, group=interaction(Cross, Temperature))) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=interaction(Cross, Temperature)), pch = 21, size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Cross, Temperature)), width=0, linetype="solid", position=position_dodge(0.4), size=1.3, color="black")+
+    xlab("Cross") + 
+    scale_fill_manual(name="Temperature", values=c("blue","red"))+
+    scale_color_manual(name="Temperature", values=c("blue","red"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.03, 0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot
+
+ggsave("Bleaching_Pairs2021/Figures/Respiration/Respiration.png", r_plot, dpi=300, w=8.5, h=5, units="in")
+```
+
+## Photosynthesis (Net)  
+
+Plot data as an interaction plot  
+```{r}
+
+p_plot<-PRdata %>%
+    group_by(Cross, Temperature)%>%
+    summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Cross), y = mean, group=interaction(Cross, Temperature))) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=interaction(Cross, Temperature)), pch = 21, size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Cross, Temperature)), width=0, linetype="solid", position=position_dodge(0.4), size=1.3, color="black")+
+    xlab("Cross") + 
+    scale_fill_manual(name="Temperature", values=c("blue","red"))+
+    scale_color_manual(name="Temperature", values=c("blue","red"))+
+    ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.03, 0.02), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); p_plot
+
+ggsave("Bleaching_Pairs2021/Figures/Respiration/NetPhotosynthesis.png", p_plot, dpi=300, w=8.5, h=5, units="in")
+```
+
+## Photosynthesis (Gross)  
+
+Plot data as an interaction plot   
+```{r}
+gp_plot<-PRdata %>%
+    group_by(Cross, Temperature)%>%
+    summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Cross), y = mean, group=interaction(Cross, Temperature))) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=interaction(Cross, Temperature)), pch = 21, size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Cross, Temperature)), width=0, linetype="solid", position=position_dodge(0.4), size=1.3, color="black")+
+    xlab("Cross") + 
+    scale_fill_manual(name="Temperature", values=c("blue","red"))+
+    scale_color_manual(name="Temperature", values=c("blue","red"))+
+    ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.03, 0.04), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); gp_plot
+
+ggsave("Bleaching_Pairs2021/Figures/Respiration/GrossPhotosynthesis.png", gp_plot, dpi=300, w=8.5, h=5, units="in")
+```
+
+## P:R Ratio  
+
+Plot data as an interaction plot     
+```{r}
+pr_plot<-PRdata %>%
+    group_by(Treatment, Temperature)%>%
+    summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
+    geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
+    xlab("Temperature") + 
+    scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot
+
+pr_plot<-PRdata %>%
+    group_by(Cross, Temperature)%>%
+    summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Cross), y = mean, group=interaction(Cross, Temperature))) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=interaction(Cross, Temperature)), pch = 21, size=6, position = position_dodge(0.4)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Cross, Temperature)), width=0, linetype="solid", position=position_dodge(0.4), size=1.3, color="black")+
+    xlab("Cross") + 
+    scale_fill_manual(name="Temperature", values=c("blue","red"))+
+    scale_color_manual(name="Temperature", values=c("blue","red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    scale_y_continuous(limits=c(-0.1, 2.5), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="top",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot
+
+ggsave("Bleaching_Pairs2021/Figures/Respiration/PRratio.png", pr_plot, dpi=300, w=8.5, h=5, units="in")
+```
+
+## Generate final figure  
+
+```{r}
+full_fig<-plot_grid(r_plot, p_plot, gp_plot, pr_plot, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1.2), label_y=1, align="h")
+
+ggsave(filename="Bleaching_Pairs2021/Figures/Respiration/respirometry_fig.png", plot=full_fig, dpi=500, width=26, height=6, units="in")
+```
+
+## Analyze data  
+
+### *Respiration*     
+
+Build linear mixed effect model and examine for Respiration.      
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Rmodel1<-lmer(R.nmol.org.min~Cross*Temperature + (1|Run), data=PRdata) #run as random
+anova(Rmodel1, type="II")
+summary(Rmodel1)
+```
+
+Check assumptions of model for residual normality and variance. Passes assumptions.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Rmodel1))
+leveneTest(residuals(Rmodel1)~Cross*Temperature, data=PRdata)
+```
+
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(Rmodel1, ~Temperature|Cross)
+cld(emm)
+```
+
+
+### *Net Photosynthesis*  
+
+Build linear mixed effect model and examine for Photosynthesis       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Pmodel1<-lmer(P.nmol.org.min~Cross*Temperature + (1|Run), data=PRdata) #run nested within day
+anova(Pmodel1, type="II")
+summary(Pmodel1)
+```
+
+Check assumptions of model for residual normality and variance. Violates variance assumption, return to this.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Pmodel1))
+leveneTest(residuals(Pmodel1)~Treatment*Temperature, data=PRdata)
+```
+
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(Pmodel1, ~Cross*Temperature)
+cld(emm)
+```
+ 
+
+### *Gross Photosynthesis*  
+
+Build linear mixed effect model and examine for GP       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+GPmodel1<-lmer(GP.nmol.org.min~Cross*Temperature + (1|Run), data=PRdata) #run nested within day
+anova(GPmodel1, type="II")
+summary(GPmodel1)
+```
+
+Check assumptions of model for residual normality and variance. Passes.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(GPmodel1))
+leveneTest(residuals(GPmodel1)~Treatment*Temperature, data=PRdata)
+```
+
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(GPmodel1, ~Treatment*Temperature)
+cld(emm)
+```
+
+### *P:R*  
+ 
+Build linear mixed effect model and examine for PR ratio       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+PRmodel1<-lmer(ratio~Cross*Temperature + (1|Run), data=PRdata) #run as random
+anova(PRmodel1, type="II")
+summary(PRmodel1)
+```
+
+Check assumptions of model for residual normality and variance. Meets assumptions.  
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(PRmodel1))
+leveneTest(residuals(PRmodel1)~Treatment*Temperature, data=PRdata)
+```
+
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(PRmodel1, ~Treatment*Temperature)
+cld(emm)
+```
+
+### Generate summary tables of mean and SE for all variables  
+
+Generate summary of all respiration data.  
+
+```{r}
+summary<-PRdata%>%
+  group_by(Temperature, Cross)%>%
+  summarise(N=length(R.nmol.org.min),
+            Mean_R=mean(R.nmol.org.min), 
+            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min), 
+            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min), 
+            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio), 
+            SE_PR=sd(ratio)/sqrt(length(ratio)))
+
+summary%>%
+  write_csv(., "Bleaching_Pairs2021/Output/Respiration/mean_respiration.csv")
+```
