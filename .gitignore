@@ -40,3 +40,7 @@ vignettes/*.pdf
 
 #DS Store files
 .DS_Store
+
+#p and r output files
+Output/Respiration/RespirationPlots/*.pdf
+Output/Respiration/PhotosynthesisPlots/*.pdf
