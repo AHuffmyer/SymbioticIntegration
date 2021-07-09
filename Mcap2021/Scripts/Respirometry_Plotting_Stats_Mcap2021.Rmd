@@ -105,7 +105,7 @@ r_plot<-PRdata %>%
       legend.text=element_text(size=12)
       ); r_plot
 
-ggsave("Mcap2021/Figures/Respiration/Respiration.png", r_plot, dpi=300, w=8.5, h=5, units="in")
+ggsave("Mcap2021/Figures/Respiration/Respiration.png", r_plot, dpi=300, w=5, h=5, units="in")
 ```
 
 ## Photosynthesis (Net)  
@@ -200,7 +200,7 @@ ggsave("Mcap2021/Figures/Respiration/PRratio.png", pr_plot, dpi=300, w=5, h=5, u
 ```{r}
 full_fig<-plot_grid(r_plot, p_plot, gp_plot, pr_plot, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1.2), label_y=1, align="h")
 
-ggsave(filename="Mcap2021/Figures/Respiration/respirometry_fig.png", plot=full_fig, dpi=500, width=26, height=6, units="in")
+ggsave(filename="Mcap2021/Figures/Respiration/respirometry_fig.png", plot=full_fig, dpi=500, width=18, height=6, units="in")
 ```
 
 ## Analyze data  
@@ -210,7 +210,7 @@ ggsave(filename="Mcap2021/Figures/Respiration/respirometry_fig.png", plot=full_f
 Build linear mixed effect model and examine for Respiration.      
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(Rmodel1, type="II")
+anova(Rmodel1, type="II") 
 summary(Rmodel1)
 ```
 
