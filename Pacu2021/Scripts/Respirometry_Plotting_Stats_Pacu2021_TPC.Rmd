@@ -1,0 +1,150 @@
+---
+title: Larval thermal performance curves  
+author: "AS Huffmyer"
+date: '2021'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiontic Integration 2021 respirometry data. 
+
+# **Setup**  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('effects')
+library('emmeans')
+library('multcomp')
+```
+
+
+# **Data visualization**  
+
+Load data from LoLinR.    
+```{r, warning=FALSE, message=FALSE}
+PRdata<-read.csv("Pacu2021/Output/Respiration/TPC/oxygen_P_R_calc.csv") #load data
+```
+
+Separate project specific data.  
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+PRdata<-PRdata[!is.na(PRdata$Type),]
+
+#format columns
+PRdata$Temperature<-as.factor(PRdata$Temperature)
+PRdata$Treatment<-as.factor(PRdata$Treatment)
+PRdata$Plate<-as.factor(PRdata$Plate)
+PRdata$Run<-as.factor(PRdata$Run)
+```
+
+View outliers.   
+```{r, warning=FALSE, message=FALSE}
+boxplot(PRdata$R.nmol.org.min)
+```
+
+# **Analysis and plotting of core dataset**  
+
+## Respiration  
+
+Plot data as a dot plot with curves.   
+```{r}
+
+PRdata$Temperature<-as.numeric(as.character(PRdata$Temperature))
+
+r_plot<-PRdata %>%
+    group_by(Temperature)%>%
+    filter(!Temperature==18)%>%
+    filter(!Temperature==8)%>%
+    filter(R.nmol.org.min<0)%>%
+    mutate(abs=abs(R.nmol.org.min))%>%
+    filter(abs<0.2)%>%
+    ggplot(., aes(x = Temperature, y = abs, colour=Treatment)) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_boxplot(aes(fill=Treatment, group=interaction(Temperature, Treatment)), alpha=0.5)+
+    geom_point(aes(fill=Treatment, group=interaction(Temperature, Treatment)), pch = 21, size=6, alpha=0.5, position = position_jitterdodge(0.3)) + 
+   geom_smooth(method = "lm", se=FALSE, formula=y ~ poly(x, 3, raw=TRUE), size=3)+
+    xlab("Temperature") + 
+    scale_fill_manual(name="Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot
+
+ggsave("Pacu2021/Figures/Respiration/TPC/Respiration.pdf", r_plot, dpi=300, w=12, h=8, units="in")
+```
+
+## Analyze data  
+
+### *Respiration*     
+
+Build linear mixed effect model and examine for Respiration.      
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+model_data<-PRdata%>%
+   filter(!Temperature==18)%>%
+   filter(!Temperature==8)%>%
+   filter(R.nmol.org.min<0)%>%
+  filter(R.nmol.org.min>-0.2)
+
+Rmodel1<-aov(R.nmol.org.min~Temperature*Treatment, data=model_data) #run as random
+summary(Rmodel1)
+```
+
+Check assumptions of model for residual normality and variance. Passes assumptions.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Rmodel1))
+leveneTest(residuals(Rmodel1)~as.factor(Temperature), data=model_data)
+```
+
+### Generate summary table  
+
+Generate summary of all respiration data.  
+
+```{r}
+summary<-PRdata%>%
+  group_by(Temperature)%>%
+  summarise(N=length(R.nmol.org.min),
+            Mean_R=mean(R.nmol.org.min), 
+            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)))
+
+summary%>%
+  write_csv(., "Pacu2021/Output/Respiration/TPC/mean_respiration.csv")
+```

@@ -1,0 +1,499 @@
+---
+title: Larval stages respirometry (photosynthesis & respiration) analysis and plotting
+author: "AS Huffmyer"
+date: '2021'
+output:
+  html_document:
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for respirometry data across *Pocillopora acuta* larval stages (I, II, III).   
+
+# **Setup**  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("car" %in% rownames(installed.packages()) == 'FALSE') install.packages('car') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("scales" %in% rownames(installed.packages()) == 'FALSE') install.packages('scales') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("effects" %in% rownames(installed.packages()) == 'FALSE') install.packages('effects') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+
+#load packages
+library("ggplot2")
+library("tidyverse")
+library('car')
+library('lme4')
+library('lmerTest')
+library('scales')
+library('cowplot')
+library('effects')
+library('emmeans')
+library('multcomp')
+```
+
+
+# **Data visualization**  
+
+Load data generated from LoLinR rates extraction.      
+```{r, warning=FALSE, message=FALSE}
+PRdata<-read.csv("Pacu2021/Output/Respiration/Stages/oxygen_P_R_calc.csv") #load data
+```
+
+Format data columns and remove blank wells.  
+```{r, warning=FALSE, message=FALSE}
+#remove all rows of wells that did not have samples or blanks
+PRdata<-PRdata[!is.na(PRdata$Type),]
+
+#format columns
+PRdata$Temperature<-as.factor(PRdata$Temperature)
+PRdata$Stage<-as.factor(PRdata$Stage)
+PRdata$Treatment<-as.factor(PRdata$Treatment)
+PRdata$Plate<-as.factor(PRdata$Plate)
+PRdata$Run<-as.factor(PRdata$Run)
+```
+
+Calculate a P:R ratio = gross photosynthesis / respiration. A 1:1 ratio indicates that photosynthesis meets respiratory demand.   
+```{r, warning=FALSE, message=FALSE}
+PRdata$ratio<-abs(PRdata$GP.nmol.org.min)/abs(PRdata$R.nmol.org.min) #calculate ratio with absolute values
+#remove outliers detected by values of P:R ratio data
+```
+
+View boxplots for each metric. For P:R ratio, remove outliers >15.    
+```{r}
+boxplot(PRdata$R.nmol.org.min)
+boxplot(PRdata$P.nmol.org.min)
+boxplot(PRdata$GP.nmol.org.min)
+boxplot(PRdata$ratio)
+PRdata<-PRdata%>%filter(ratio < 15) #filter out outlier for PR ratio
+boxplot(PRdata$ratio)
+```
+
+# **Plotting**  
+
+In these plots, there are several factors displayed:  
+1) "Treatment" = larval rearing treatment, either high or ambient  
+2) "Temperature" = temperature at which respirometry was conducted, either 27C or 31C  
+3) "Stage" = the larval stage, either 1 (planula), 2 (metamorphosing), or 3 (polyp)
+
+
+## Respiration  
+
+Respiration data provides information on organism energetic demand. Here, respiration is shown as the absolute value of oxygen consumed per larva per unit time.  
+
+First, plot data as a box plot.  
+
+```{r}
+r_plot<-PRdata %>%
+    droplevels()%>%
+    group_by(Temperature)%>%
+    mutate(abs=abs(R.nmol.org.min))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = abs, group=interaction(Treatment, Temperature))) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_boxplot(aes(fill=Treatment, group=interaction(Treatment,Temperature)), alpha=0.5)+
+    geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue","red"))+
+    scale_color_manual(name="Temperature", values=c("blue","red"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot
+```
+
+Next plot as an interaction plot.  
+
+```{r}
+r_plot_b<-PRdata %>%
+    group_by(Temperature, Treatment, Stage)%>%
+    mutate(abs=abs(R.nmol.org.min))%>%
+    summarise(mean=mean(abs), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Treatment)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_line(position=position_dodge(0.3), size=1.3, alpha=0.75,aes(color=Treatment, group=Treatment)) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), width=0, linetype="solid", position=position_dodge(0.3), size=0.8, color="black")+
+     geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=6, alpha=0.75, position = position_dodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot_b
+```
+
+
+## Photosynthesis (Net)  
+
+Net photosynthesis shows the oxygen production that occurs in excess of oxygen consumption (respiration).  
+
+Plot data as a box plot.  
+
+```{r}
+p_plot<-PRdata %>%
+    droplevels()%>%
+    group_by(Temperature)%>%
+    ggplot(., aes(x = as.factor(Temperature), y = P.nmol.org.min, group=Temperature)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_boxplot(aes(fill=Treatment, group=interaction(Treatment,Temperature)), alpha=0.5)+
+    geom_point(aes(fill=Treatment, group=interaction(Treatment,Temperature)), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue", "red"))+
+    ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.005, 0.03), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); p_plot
+
+```
+
+Plot as an interaction plot.  
+
+```{r}
+p_plot_b<-PRdata %>%
+    group_by(Temperature, Treatment, Stage)%>%
+    summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Treatment)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_line(position=position_dodge(0.3), size=1.3, alpha=0.75,aes(color=Treatment, group=Treatment)) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), width=0, linetype="solid", position=position_dodge(0.3), size=0.8, color="black")+
+     geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=6, alpha=0.75, position = position_dodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); p_plot_b
+```
+
+
+## Photosynthesis (Gross)  
+
+Gross photosynthesis is calculated by removing oxygen consumption (respiration) therefore showing total oxygen production (photosynthesis).  
+
+First, lot data as a box plot.  
+
+
+```{r}
+gp_plot<-PRdata %>%
+    group_by(Temperature)%>%
+    filter(GP.nmol.org.min>0)%>%
+    ggplot(., aes(x = as.factor(Temperature), y = GP.nmol.org.min, group=Temperature)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_boxplot(aes(fill=Treatment, group=interaction(Treatment,Temperature)), alpha=0.5)+
+    geom_point(aes(fill=Treatment, group=interaction(Treatment,Temperature)), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue", "red"))+
+    ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.005, 0.05), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); gp_plot
+
+```
+
+Next plot as an interaction plot.  
+
+```{r}
+gp_plot_b<-PRdata %>%
+    group_by(Temperature, Treatment, Stage)%>%
+    summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Treatment)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_line(position=position_dodge(0.3), size=1.3, alpha=0.75,aes(color=Treatment, group=Treatment)) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), width=0, linetype="solid", position=position_dodge(0.3), size=0.8, color="black")+
+     geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=6, alpha=0.75, position = position_dodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); gp_plot_b
+```
+
+## P:R Ratio  
+
+P:R ratio shows the energy balance between photosynthesis and respiration. A ratio of 1 indicates that gross photosynthesis = respiration. Values >1 indicate more oxygen is produced than consumed.  
+
+Plot data as a box plot.  
+
+
+```{r}
+pr_plot<-PRdata %>%
+    group_by(Temperature)%>%
+    ggplot(., aes(x = as.factor(Temperature), y = ratio, group=Temperature)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    geom_boxplot(aes(fill=Temperature, group=interaction(Treatment,Temperature)), alpha=0.5)+
+    geom_point(aes(fill=Temperature, group=interaction(Treatment,Temperature)), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue", "red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    #scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot
+
+```
+
+Plot as an interaction plot.  
+```{r}
+pr_plot_b<-PRdata %>%
+    group_by(Temperature, Treatment, Stage)%>%
+    summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Treatment)) +
+    facet_wrap(~Stage)+
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    geom_line(position=position_dodge(0.3), size=1.3, alpha=0.75,aes(color=Treatment, group=Treatment)) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), width=0, linetype="solid", position=position_dodge(0.3), size=0.8, color="black")+
+     geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=6, alpha=0.75, position = position_dodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot_b
+```
+
+## Generate final figure of all plots together.     
+
+Box plot figures:  
+```{r}
+full_fig<-plot_grid(r_plot, p_plot, gp_plot, pr_plot, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1), label_y=1, align="h")
+
+ggsave(filename="Pacu2021/Figures/Respiration/Stages/stages_boxplots.png", plot=full_fig, dpi=500, width=18, height=6, units="in")
+```
+
+Interaction plot figures:  
+```{r}
+full_fig_b<-plot_grid(r_plot_b, p_plot_b, gp_plot_b, pr_plot_b, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1), label_y=1, align="h")
+
+ggsave(filename="Pacu2021/Figures/Respiration/Stages/stages_interaction.png", plot=full_fig_b, dpi=500, width=24, height=6, units="in")
+```
+
+
+# **Analyze data**    
+
+Analyze data using an anova analysis with treatment (larval rearing), temperature (temperature of measurement) and stage as main effects. For these analysis, only include Stage 1 and Stage 2, becuase we do not have high treatment larvae for Stage 3.      
+
+## Respiration      
+ 
+Change variables to factors.  
+```{r}
+PRdata$Temperature<-as.factor(PRdata$Temperature)
+PRdata$Treatment<-as.factor(PRdata$Treatment)
+PRdata$Stage<-as.factor(PRdata$Stage)
+PRdata$Date<-as.factor(PRdata$Date)
+PRdata$Run<-as.factor(PRdata$Run)
+```
+
+Build model and examine for respiration.      
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+model_data<-PRdata%>%
+  filter(!Stage=="Stage3")
+
+Rmodel1<-aov(R.nmol.org.min~Temperature*Treatment*Stage, data=model_data)
+summary(Rmodel1)
+```
+
+Temperature x treatment interaction is significant for respiration.  
+
+Check assumptions of model for residual normality and variance. 
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Rmodel1))
+leveneTest(residuals(Rmodel1)~Temperature*Treatment*Stage, data=model_data)
+```
+Passes assumptions.    
+
+## Net Photosynthesis    
+
+Build model and examine for net photosynthesis.        
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Pmodel1<-aov(P.nmol.org.min~Temperature*Treatment*Stage, data=model_data) 
+summary(Pmodel1)
+```
+
+Temperature and stage are significant for net photosynthesis.  
+
+Check assumptions of model for residual normality and variance.     
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Pmodel1))
+leveneTest(residuals(Pmodel1)~Temperature*Treatment*Stage, data=model_data)
+```
+
+Passes assumptions.  
+
+Conduct post hoc test to look at pairwise differences for temperature and treatments between stages.      
+
+```{r}
+emm<-emmeans(Pmodel1, ~Temperature*Treatment | Stage)
+pairs(emm)
+```
+
+Next, conduct post hoc test to look at pairwise differences for stages and treatments between temperatures      
+
+```{r}
+emm<-emmeans(Pmodel1, ~Stage*Treatment | Temperature)
+pairs(emm)
+```
+
+## Gross Photosynthesis    
+
+Build model and examine for gross photosynthesis. Remove outliers of ratio >6.          
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+GPmodel1<-aov(GP.nmol.org.min~Temperature*Treatment*Stage, data=model_data) 
+summary(GPmodel1)
+```
+
+Stage and Temperature x treatment interaction are significant.  
+
+Check assumptions of model for residual normality and variance.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(GPmodel1))
+leveneTest(residuals(GPmodel1)~Temperature*Treatment*Stage, data=model_data)
+```
+
+Passes. 
+
+Conduct post hoc test looking between stages.  
+
+```{r}
+emm<-emmeans(GPmodel1, ~Temperature*Treatment | Stage)
+pairs(emm)
+```
+
+Conduct post hoc test looking between temperatures  
+
+```{r}
+emm<-emmeans(GPmodel1, ~Stage*Treatment | Temperature)
+pairs(emm)
+```
+
+##  P:R ratio   
+
+Build model and examine for PR ratio.        
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+PRmodel1<-aov(ratio~Temperature*Treatment*Stage, data=model_data)
+summary(PRmodel1)
+```
+
+No significant effects for P:R ratio.  
+
+Check assumptions of model for residual normality and variance. 
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(PRmodel1))
+leveneTest(residuals(PRmodel1)~Temperature*Treatment*Stage, data=model_data)
+```
+
+Meets assumptions.  
+
+Conduct post hoc test within stage.  
+
+```{r}
+emm<-emmeans(PRmodel1, ~Temperature*Treatment | Stage)
+pairs(emm)
+```
+
+Conduct post hoc test within temperature  
+
+```{r}
+emm<-emmeans(PRmodel1, ~Stage*Treatment | Temperature)
+pairs(emm)
+```
+
+## Generate summary table   
+
+Generate summary of all respiration data.  
+
+```{r}
+summary<-PRdata%>%
+  group_by(Temperature, Treatment, Stage)%>%
+  summarise(N=length(R.nmol.org.min),
+            Mean_R=mean(R.nmol.org.min), 
+            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min), 
+            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min), 
+            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio), 
+            SE_PR=sd(ratio)/sqrt(length(ratio)));summary
+
+summary%>%
+  write_csv(., "Pacu2021/Output/Respiration/Stages/mean_respiration.csv")
+```

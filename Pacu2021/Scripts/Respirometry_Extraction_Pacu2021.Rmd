@@ -134,7 +134,8 @@ for(i in 1:length(file.names)) { # for every file in list start at the first and
 
 ```
 
-Removed column B6 due to missing sensor. This column had to be removed from data sheets due to 'no sensor' reading that stops the code.   
+Removed column B6 due to missing sensor in 710 plates. This column had to be removed from data sheets due to 'no sensor' reading that stops the code. B6 removed from all plates to allow loop to run.  
+
 Save respiration data frames.  
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
@@ -150,7 +151,7 @@ Resp.Rates = subset(Resp.Rates, select = -c(X) ) #remove empty column
 #format "run" column
 Resp.Rates<-Resp.Rates %>%
   mutate(Run = str_sub(Run, 4, -1))
-Resp.Rates$Run<-as.integer(Resp.Rates$Run) #format as # rather than run #, set as integer
+#Resp.Rates$Run<-as.integer(Resp.Rates$Run) #format as # rather than run #, set as integer
 ```
 
 Run loop to extract slopes from photosynthesis data ( time < photosynthesis end time). 
@@ -199,7 +200,7 @@ Photo.Rates = subset(Photo.Rates, select = -c(X) ) #remove empty column
 #format "run" column
 Photo.Rates<-Photo.Rates %>% #Format as "#" rather than "Run#"
   mutate(Run = str_sub(Run, 4, -1))
-Photo.Rates$Run<-as.integer(Photo.Rates$Run) #format as integer
+#Photo.Rates$Run<-as.integer(Photo.Rates$Run) #format as integer
 ```
 
 Merge P and R files with sample info for testing and manipulation.  
