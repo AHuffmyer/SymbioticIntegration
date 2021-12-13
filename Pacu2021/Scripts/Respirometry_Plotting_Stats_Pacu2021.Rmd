@@ -91,7 +91,7 @@ Plot data as an interaction plot
 ```{r}
 r_plot<-PRdata %>%
     group_by(Temperature)%>%
-    filter(R.nmol.org.min<0)%>%
+    #filter(R.nmol.org.min<0)%>%
     #summarise(mean=mean(R.nmol.org.min), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = R.nmol.org.min, group=Temperature)) +
     #facet_wrap(~Date)+
@@ -125,7 +125,7 @@ Plot data as an interaction plot
 ```{r}
 p_plot<-PRdata %>%
     group_by(Temperature)%>%
-    filter(P.nmol.org.min>0)%>%
+    #filter(P.nmol.org.min>0)%>%
     #summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = P.nmol.org.min, group=Temperature)) +
     #facet_wrap(~Date)+
@@ -158,7 +158,7 @@ Plot data as an interaction plot
 ```{r}
 gp_plot<-PRdata %>%
     group_by(Temperature)%>%
-    filter(GP.nmol.org.min>0)%>%
+    #filter(GP.nmol.org.min>0)%>%
     #summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = GP.nmol.org.min, group=Temperature)) +
     #facet_wrap(~Date)+
@@ -190,8 +190,8 @@ Plot data as an interaction plot
 ```{r}
 pr_plot<-PRdata %>%
     group_by(Temperature)%>%
-    filter(R.nmol.org.min<0)%>%
-    filter(P.nmol.org.min>0)%>%
+    #filter(R.nmol.org.min<0)%>%
+    #filter(P.nmol.org.min>0)%>%
     #summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = ratio, group=Temperature)) +
     #facet_wrap(~Date)+

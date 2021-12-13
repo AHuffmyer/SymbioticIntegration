@@ -86,7 +86,7 @@ r_plot<-PRdata %>%
     group_by(Temperature)%>%
     filter(!Temperature==18)%>%
     filter(!Temperature==8)%>%
-    filter(R.nmol.org.min<0)%>%
+    #filter(R.nmol.org.min<0)%>%
     mutate(abs=abs(R.nmol.org.min))%>%
     filter(abs<0.2)%>%
     ggplot(., aes(x = Temperature, y = abs, colour=Treatment)) +
@@ -120,7 +120,7 @@ Build linear mixed effect model and examine for Respiration.
 model_data<-PRdata%>%
    filter(!Temperature==18)%>%
    filter(!Temperature==8)%>%
-   filter(R.nmol.org.min<0)%>%
+   #filter(R.nmol.org.min<0)%>%
   filter(R.nmol.org.min>-0.2)
 
 Rmodel1<-aov(R.nmol.org.min~Temperature*Treatment, data=model_data) #run as random
