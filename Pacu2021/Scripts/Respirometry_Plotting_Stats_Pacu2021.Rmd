@@ -4,7 +4,6 @@ author: "AS Huffmyer"
 date: '2021'
 output:
   html_document:
-    code_folding: hide
     toc: yes
     toc_depth: 6
     toc_float: yes
@@ -13,7 +12,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-This script analyzes and plots data for Symbiontic Integration 2021 respirometry data. 
+This script analyzes and plots data for Symbiontic Integration 2021 respirometry data for Pacuta larvae.   
 
 # **Setup**  
 
@@ -49,14 +48,14 @@ library('multcomp')
 ```
 
 
-# **Data visualization and manipulation**  
+# **Data manipulation**  
 
 Load data from LoLinR.    
 ```{r, warning=FALSE, message=FALSE}
 PRdata<-read.csv("Pacu2021/Output/Respiration/PR/oxygen_P_R_calc.csv") #load data
 ```
 
-Separate project specific data.  
+Format data columns.   
 ```{r, warning=FALSE, message=FALSE}
 #remove all rows of wells that did not have samples or blanks
 PRdata<-PRdata[!is.na(PRdata$Type),]
@@ -67,13 +66,12 @@ PRdata$Plate<-as.factor(PRdata$Plate)
 PRdata$Run<-as.factor(PRdata$Run)
 ```
 
-Calculate a P:R ratio using gross photosynthesis.  
+Calculate a P:R ratio using gross photosynthesis and respiration calculated as GP:R.    
 ```{r, warning=FALSE, message=FALSE}
 PRdata$ratio<-abs(PRdata$GP.nmol.org.min)/abs(PRdata$R.nmol.org.min) #calculate ratio with absolute values
-#remove outliers detected by values of P:R ratio data
 ```
 
-View outliers.  
+View outliers. Remove outliers for P:R data.   
 ```{r}
 boxplot(PRdata$R.nmol.org.min)
 boxplot(PRdata$P.nmol.org.min)
@@ -83,28 +81,23 @@ PRdata<-PRdata%>%filter(ratio < 4) #filter out outlier for PR ratio
 boxplot(PRdata$ratio)
 ```
 
-# **Analysis and plotting of core dataset**  
+# **Plotting**  
 
 ## Respiration  
 
-Plot data as an interaction plot   
+Plot data as a box plot.  
 ```{r}
 r_plot<-PRdata %>%
     group_by(Temperature)%>%
-    #filter(R.nmol.org.min<0)%>%
-    #summarise(mean=mean(R.nmol.org.min), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = R.nmol.org.min, group=Temperature)) +
-    #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    #geom_line(position=position_dodge(0.2), size=1.3, aes(color=Temperature, group=Temperature)) +
     geom_boxplot(aes(fill=Temperature, group=Temperature), alpha=0.5)+
     geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
-    #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
     scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
-    #scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    scale_y_continuous(limits=c(-0.2, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -113,32 +106,49 @@ r_plot<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); r_plot
+```
 
-#ggsave("Pacu2021/Figures/Respiration/PR/Respiration.png", r_plot, dpi=300, w=4, h=5, units="in")
+Plot data as a mean dot plot.  
+```{r}
+r_plot_b<-PRdata %>%
+    group_by(Temperature)%>%
+    summarise(mean=mean(R.nmol.org.min), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Temperature)) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=6, alpha=0.8, position = position_dodge(0.3)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.3), size=1, color="black")+
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
+    ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.1, 0.06), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); r_plot_b
 ```
 
 ## Photosynthesis (Net)  
 
-For photosynthesis filter out runs 7 and 8, outliers that didn't work.  
+For photosynthesis filter out runs 7 and 8, these runs were outliers that didn't work due to equipment issues.    
 
-Plot data as an interaction plot  
+Plot data as a box plot.    
 ```{r}
 p_plot<-PRdata %>%
     group_by(Temperature)%>%
-    #filter(P.nmol.org.min>0)%>%
-    #summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = P.nmol.org.min, group=Temperature)) +
-    #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    #geom_line(position=position_dodge(0.2), size=1.3, aes(color=Temperature, group=Temperature)) +
     geom_boxplot(aes(fill=Temperature, group=Temperature), alpha=0.5)+
     geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
-    #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
     scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
     ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
-    #scale_y_continuous(limits=c(-0.005, 0.03), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    scale_y_continuous(limits=c(-0.02, 0.33), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -147,31 +157,48 @@ p_plot<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); p_plot
-
-#ggsave("Pacu2021/Figures/Respiration/PR/NetPhotosynthesis.png", p_plot, dpi=300, w=4, h=5, units="in")
 ```
 
+Plot data as a mean dot plot.    
+```{r}
+p_plot_b<-PRdata %>%
+    group_by(Temperature)%>%
+    summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Temperature)) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=6, alpha=0.8, position = position_dodge(0.3)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.3), size=1, color="black")+
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
+    ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.005, 0.15), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); p_plot_b
+
+```
 
 ## Photosynthesis (Gross)  
 
-Plot data as an interaction plot   
+Plot data as a box plot.    
 ```{r}
 gp_plot<-PRdata %>%
     group_by(Temperature)%>%
-    #filter(GP.nmol.org.min>0)%>%
-    #summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = GP.nmol.org.min, group=Temperature)) +
-    #facet_wrap(~Date)+
     geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
-    #geom_line(position=position_dodge(0.2), size=1.3, aes(color=Temperature, group=Temperature)) +
     geom_boxplot(aes(fill=Temperature, group=Temperature), alpha=0.5)+
     geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
-    #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
     scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
     ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
-    #scale_y_continuous(limits=c(-0.005, 0.05), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    scale_y_continuous(limits=c(-0.02, 0.33), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -180,31 +207,22 @@ gp_plot<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); gp_plot
-
-#ggsave("Pacu2021/Figures/Respiration/PR/GrossPhotosynthesis.png", gp_plot, dpi=300, w=4, h=5, units="in")
 ```
 
-## P:R Ratio  
-
-Plot data as an interaction plot     
+Plot data as a mean dot plot.    
 ```{r}
-pr_plot<-PRdata %>%
+gp_plot_b<-PRdata %>%
     group_by(Temperature)%>%
-    #filter(R.nmol.org.min<0)%>%
-    #filter(P.nmol.org.min>0)%>%
-    #summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
-    ggplot(., aes(x = as.factor(Temperature), y = ratio, group=Temperature)) +
-    #facet_wrap(~Date)+
-    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
-    #geom_line(position=position_dodge(0.2), size=1.3, aes(color=Temperature, group=Temperature)) +
-    geom_boxplot(aes(fill=Temperature, group=Temperature), alpha=0.5)+
-    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
-    #geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+ size=1.3, color="black")+
+    summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Temperature)) +
+    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=6, alpha=0.8, position = position_dodge(0.3)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.3), size=1, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
     scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
-    ylab(expression(bold(paste("P:R")))) +
-    #scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+    scale_y_continuous(limits=c(-0.005, 0.15), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -212,25 +230,79 @@ pr_plot<-PRdata %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
-      ); pr_plot
-
-#ggsave("Pacu2021/Figures/Respiration/PR/PRratio.png", pr_plot, dpi=300, w=4, h=5, units="in")
+      ); gp_plot_b
 ```
 
+## P:R Ratio  
+
+Plot data as a box plot.     
+```{r}
+pr_plot<-PRdata %>%
+    group_by(Temperature)%>%
+    ggplot(., aes(x = as.factor(Temperature), y = ratio, group=Temperature)) +
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    geom_boxplot(aes(fill=Temperature, group=Temperature), alpha=0.5)+
+    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=4, alpha=0.5, position = position_jitterdodge(0.3)) + 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    scale_y_continuous(limits=c(0, 4), labels = scales::number_format(accuracy = 0.1, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot
+```
+
+Plot data as a mean dot plot.     
+```{r}
+pr_plot_b<-PRdata %>%
+    group_by(Temperature)%>%
+    summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean, group=Temperature)) +
+    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    geom_point(aes(fill=Temperature, group=Temperature), pch = 21, size=6, alpha=0.8, position = position_dodge(0.3)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Temperature), width=0, linetype="solid", position=position_dodge(0.3), size=1, color="black")+ 
+    xlab("Temperature") + 
+    scale_fill_manual(name="Temperature", values=c("blue","orange", "red"))+
+    scale_color_manual(name="Temperature", values=c("blue","orange", "red"))+
+    ylab(expression(bold(paste("P:R")))) +
+    scale_y_continuous(limits=c(0, 2), labels = scales::number_format(accuracy = 0.1, decimal.mark = '.'))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); pr_plot_b
+```
 
 ## Generate final figure  
 
+Box plot assembled figure.  
 ```{r}
 full_fig<-plot_grid(r_plot, p_plot, gp_plot, pr_plot, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1.2), label_y=1, align="h")
 
-ggsave(filename="Pacu2021/Figures/Respiration/PR/respirometry_fig.png", plot=full_fig, dpi=500, width=18, height=6, units="in")
+ggsave(filename="Pacu2021/Figures/Respiration/PR/respirometry_fig_boxplot.png", plot=full_fig, dpi=500, width=18, height=6, units="in")
 ```
 
-## Analyze data  
+Mean plot assembled figure.  
+```{r}
+full_fig_b<-plot_grid(r_plot_b, p_plot_b, gp_plot_b, pr_plot_b, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1.2), label_y=1, align="h")
+
+ggsave(filename="Pacu2021/Figures/Respiration/PR/respirometry_fig_mean.png", plot=full_fig_b, dpi=500, width=18, height=6, units="in")
+```
+
+## **Analysis**   
 
 ### *Respiration*     
 
-Change to factors.  
+Change data columns to factors.  
 ```{r}
 PRdata$Temperature<-as.factor(PRdata$Temperature)
 PRdata$Date<-as.factor(PRdata$Date)
@@ -243,25 +315,31 @@ View respiration data.
 hist(PRdata$R.nmol.org.min)
 ```
 
-Build linear mixed effect model and examine for Respiration.      
+Build model and examine for respiration across temperatures.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-#Rmodel1<-aov(R.nmol.org.min~Temperature*Date, data=PRdata) 
-Rmodel1<-aov(R.nmol.org.min~Temperature, data=PRdata) #run as random
+Rmodel1<-aov(R.nmol.org.min~Temperature, data=PRdata) 
 summary(Rmodel1)
 ```
 
-Check assumptions of model for residual normality and variance. Passes assumptions.    
+Check assumptions of model for residual normality and variance. 
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(Rmodel1))
 leveneTest(residuals(Rmodel1)~Temperature, data=PRdata)
 ```
 
+Conduct post hoc test.  
+
+```{r}
+emm<-emmeans(Rmodel1, ~Temperature)
+pairs(emm)
+```
+
 ### *Net Photosynthesis*  
 
-Build linear mixed effect model and examine for Photosynthesis       
+Build model and examine for Photosynthesis across temperatures.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-aov(P.nmol.org.min~Temperature, data=PRdata) #run nested within day
+Pmodel1<-aov(P.nmol.org.min~Temperature, data=PRdata) 
 summary(Pmodel1)
 ```
 
@@ -278,17 +356,16 @@ Conduct post hoc test.
 emm<-emmeans(Pmodel1, ~Temperature)
 pairs(emm)
 ```
- 
 
 ### *Gross Photosynthesis*  
 
-Build linear mixed effect model and examine for GP       
+Build model and examine for gross photosynthesis across temperatures.         
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-aov(GP.nmol.org.min~Temperature, data=PRdata) #run nested within day
+GPmodel1<-aov(GP.nmol.org.min~Temperature, data=PRdata)
 summary(GPmodel1)
 ```
 
-Check assumptions of model for residual normality and variance. Passes.    
+Check assumptions of model for residual normality and variance.      
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(GPmodel1))
@@ -304,9 +381,9 @@ pairs(emm)
 
 ### *P:R*  
  
-Build linear mixed effect model and examine for PR ratio       
+Build model and examine for PR ratio across temperatures.         
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-aov(ratio~Temperature, data=PRdata) #run as random
+PRmodel1<-aov(ratio~Temperature, data=PRdata) 
 summary(PRmodel1)
 ```
 
@@ -324,7 +401,7 @@ emm<-emmeans(PRmodel1, ~Temperature)
 pairs(emm)
 ```
 
-### Generate summary tables of mean and SE for all variables  
+### *Generate summary*  
 
 Generate summary of all respiration data.  
 
@@ -343,6 +420,8 @@ summary<-PRdata%>%
             SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
             Mean_PR=mean(ratio), 
             SE_PR=sd(ratio)/sqrt(length(ratio)))
+
+summary
 
 summary%>%
   write_csv(., "Pacu2021/Output/Respiration/PR/mean_respiration.csv")

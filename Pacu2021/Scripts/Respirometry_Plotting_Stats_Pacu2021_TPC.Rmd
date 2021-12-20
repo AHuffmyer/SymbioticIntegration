@@ -13,7 +13,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-This script analyzes and plots data for Symbiontic Integration 2021 respirometry data. 
+This script analyzes and plots data for Symbiontic Integration 2021 respirometry data for thermal performance curves.  
 
 # **Setup**  
 
@@ -56,7 +56,7 @@ Load data from LoLinR.
 PRdata<-read.csv("Pacu2021/Output/Respiration/TPC/oxygen_P_R_calc.csv") #load data
 ```
 
-Separate project specific data.  
+Format data columns.  
 ```{r, warning=FALSE, message=FALSE}
 #remove all rows of wells that did not have samples or blanks
 PRdata<-PRdata[!is.na(PRdata$Type),]
@@ -73,7 +73,7 @@ View outliers.
 boxplot(PRdata$R.nmol.org.min)
 ```
 
-# **Analysis and plotting of core dataset**  
+# **Plotting**  
 
 ## Respiration  
 
@@ -111,11 +111,11 @@ r_plot<-PRdata %>%
 ggsave("Pacu2021/Figures/Respiration/TPC/Respiration.pdf", r_plot, dpi=300, w=12, h=8, units="in")
 ```
 
-## Analyze data  
+# **Analysis**    
 
-### *Respiration*     
+## Model  
 
-Build linear mixed effect model and examine for Respiration.      
+Build ANOVA model and examine for Respiration across temperatures. Remove 8 and 18C temperatures.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 model_data<-PRdata%>%
    filter(!Temperature==18)%>%
@@ -127,16 +127,16 @@ Rmodel1<-aov(R.nmol.org.min~Temperature*Treatment, data=model_data) #run as rand
 summary(Rmodel1)
 ```
 
-Check assumptions of model for residual normality and variance. Passes assumptions.    
+Check assumptions of model for residual normality and variance. 
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(Rmodel1))
 leveneTest(residuals(Rmodel1)~as.factor(Temperature), data=model_data)
 ```
 
-### Generate summary table  
+## Summary    
 
-Generate summary of all respiration data.  
+Generate summary of respiration across temperatures.    
 
 ```{r}
 summary<-PRdata%>%
@@ -144,6 +144,8 @@ summary<-PRdata%>%
   summarise(N=length(R.nmol.org.min),
             Mean_R=mean(R.nmol.org.min), 
             SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)))
+
+summary
 
 summary%>%
   write_csv(., "Pacu2021/Output/Respiration/TPC/mean_respiration.csv")
