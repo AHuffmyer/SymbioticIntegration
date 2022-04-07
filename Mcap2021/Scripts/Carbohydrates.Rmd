@@ -1,0 +1,279 @@
+---
+title: Carbohydrate analysis
+author: "AS Huffmyer"
+date: '2022'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiontic Integration 2021 survival data. 
+
+# **Setup**  
+
+Load libraries. 
+
+```{r}
+library(dbplyr)
+library(tidyverse)
+library(readr)
+library(stringr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(Rmisc)
+library(ggpubr)
+library(lsmeans)
+```
+
+# **Load data**  
+
+Read in datafiles
+
+```{r}
+data <- read.csv("Mcap2021/Data/Carbohydrates/20220406_Carbohydrates_data.csv")
+Meta <- read.csv("Mcap2021/Data/Carbohydrates/20220406_Carb_Meta.csv")
+```
+
+# **Run with only Initial Standard curve**  
+
+Merging Files and renaming columns
+
+```{r}
+data.1 <- merge(Meta, data, by = c("Well", "Run"))
+
+# Blank correction for each run separately
+
+Blank <- data.1 %>% 
+  filter(Sample.Type == "Blank") %>%
+  filter(Run=="Initial")%>%
+  summarise(blk.avg = mean(X485))
+
+data.1$abs.corr <- data.1$X485 - Blank$blk.avg
+```
+
+```{r}
+# Standard curve 
+
+Standard <- data.1 %>% 
+  filter(Sample.Type == "Standard")%>%
+  filter(Run=="Initial")
+
+Standard.plot <- ggplot(data = Standard, aes(x=Concentration, y=abs.corr))+
+  #facet_grid(~Run)+
+  ylab("Absorbance (nm)")+ xlab("Carbohydrate (mg/mL)") + 
+  geom_point()+
+  geom_smooth(method = "lm") +
+  stat_regline_equation(label.y = 1.0, aes(label = ..eq.label..)) +
+  stat_regline_equation(label.y = 0.75, aes(label = ..rr.label..)) +
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1));Standard.plot
+```
+
+Extract standard curve.  
+```{r}
+lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
+lmsummary <- summary(lmstandard) 
+```
+
+# **Calculations (initial curve)**  
+
+Obtain concentration values for samples from standard curve.  
+
+```{r}
+Samples <- data.1 %>% #subsetting Samples
+  filter(Sample.Type == "Sample")%>%
+  filter(!Run=="Initial")
+
+Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to get concentration
+```
+
+Accounting for dilution factor (1000/10) and normalizing to homogenate volume 
+
+```{r}
+Samples$Carb.uL <- (Samples$Concentration * Samples$Homo_vol * 10)
+```
+
+Plot all together  
+```{r}
+Carb.Plot.Ast.Larvae <- Samples%>%
+  ggplot(aes(x=Treatment, y=Carb.uL, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  #  ylim(0,0.5) +
+  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
+  xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.Ast.Larvae 
+```
+
+Plot only larvae
+
+```{r}
+Carb.Plot <- Samples%>%
+  filter(!Treatment=="Astrangia")%>%
+  ggplot(aes(x=Treatment, y=Carb.uL, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  #  ylim(0,0.5) +
+  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
+  xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot 
+```
+
+Potential outliers are A, I (high values), and H (low values)
+
+Plot only Astrangia
+
+```{r}
+Carb.Plot.Ast <- Samples%>%
+  filter(Treatment=="Astrangia")%>%
+  ggplot(aes(x=Sample.ID, y=Carb.uL, fill = Fraction)) +
+  #facet_grid(~Sample.ID)+
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  #  ylim(0,0.5) +
+  xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.Ast
+```
+
+
+# **Run with all runs Standard curve**  
+
+Merging Files and renaming columns
+
+```{r}
+data.1.all <- merge(Meta, data, by = c("Well", "Run"))
+
+# Blank correction for each run separately
+
+Blank.all <- data.1.all %>% 
+  filter(Sample.Type == "Blank") %>%
+  #filter(Run=="Initial")%>%
+  summarise(blk.avg = mean(X485))
+
+data.1.all$abs.corr <- data.1.all$X485 - Blank.all$blk.avg
+```
+
+```{r}
+# Standard curve 
+
+Standard.all <- data.1.all %>% 
+  filter(Sample.Type == "Standard") #%>%
+  #filter(Run=="Initial")
+
+Standard.plot.all <- ggplot(data = Standard.all, aes(x=Concentration, y=abs.corr))+
+  facet_grid(~Run)+
+  ylab("Absorbance (nm)")+ xlab("Carbohydrate (mg/mL)") + 
+  geom_point()+
+  geom_smooth(method = "lm") +
+  stat_regline_equation(label.y = 1.0, aes(label = ..eq.label..)) +
+  stat_regline_equation(label.y = 0.75, aes(label = ..rr.label..)) +
+  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                     panel.grid.minor = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1));Standard.plot.all
+```
+
+Extract standard curve.  
+```{r}
+lmstandard.all <- lm (Concentration ~ abs.corr, data = Standard.all)
+lmsummary.all <- summary(lmstandard.all) 
+```
+
+# **Calculations (all curves)**  
+
+Obtain concentration values for samples from standard curve.  
+
+```{r}
+Samples.all <- data.1.all %>% #subsetting Samples
+  filter(Sample.Type == "Sample")%>%
+  filter(!Run=="Initial")
+
+Samples.all$Concentration <- predict(lmstandard.all, newdata = Samples.all) #using model to get concentration
+```
+
+Accounting for dilution factor (1000/10) and normalizing to homogenate volume 
+
+```{r}
+Samples.all$Carb.uL <- (Samples.all$Concentration * Samples.all$Homo_vol * 10)
+```
+
+Plot only larvae
+
+```{r}
+Carb.Plot.all <- Samples.all%>%
+  filter(!Treatment=="Astrangia")%>%
+  ggplot(aes(x=Treatment, y=Carb.uL, fill = Fraction, label=Sample.ID)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  #  ylim(0,0.5) +
+  geom_text(position=position_jitterdodge(dodge.width=0.4))+
+  xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.all 
+```
+
+Potential outliers are A, I (high values), and H (low values)
+
+Plot only Astrangia
+
+```{r}
+Carb.Plot.Ast.all <- Samples.all%>%
+  filter(Treatment=="Astrangia")%>%
+  ggplot(aes(x=Sample.ID, y=Carb.uL, fill = Fraction)) +
+  #facet_grid(~Sample.ID)+
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  #  ylim(0,0.5) +
+  xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.Ast.all
+```
+
+# **Show plots side by side**  
+
+```{r}
+library(cowplot)
+
+larvae.compare<-plot_grid(Carb.Plot, Carb.Plot.all, nrow=1, ncol=2)
+larvae.compare
+
+ast.compare<-plot_grid(Carb.Plot.Ast, Carb.Plot.Ast.all, nrow=1, ncol=2)
+ast.compare
+```
+
+We get the same answer with very minor differences using the curves. so we will proceed with using the first curve (Initial Run) because it was more robust.  
+
+# **Calculate Ratio of host:holobiont**   
+
+Calculate the ratio of host:holobiont carbohydrates 
