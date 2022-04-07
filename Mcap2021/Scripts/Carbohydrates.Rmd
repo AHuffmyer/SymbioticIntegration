@@ -21,7 +21,6 @@ Load libraries.
 
 ```{r}
 library(dbplyr)
-library(tidyverse)
 library(readr)
 library(stringr)
 library(gridExtra)
@@ -31,6 +30,7 @@ library(lattice)
 library(Rmisc)
 library(ggpubr)
 library(lsmeans)
+library(tidyverse)
 ```
 
 # **Load data**  
@@ -138,6 +138,17 @@ Carb.Plot <- Samples%>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot 
 ```
 
+Test for differences with an anova.  
+
+```{r}
+model<-Samples%>%
+  filter(!Treatment=="Astrangia")%>%
+  
+  aov(Carb.uL~Treatment, data=.)
+
+summary(model)
+```
+
 Potential outliers are A, I (high values), and H (low values)
 
 Plot only Astrangia
@@ -225,12 +236,12 @@ Plot only larvae
 ```{r}
 Carb.Plot.all <- Samples.all%>%
   filter(!Treatment=="Astrangia")%>%
-  ggplot(aes(x=Treatment, y=Carb.uL, fill = Fraction, label=Sample.ID)) +
+  ggplot(aes(x=Treatment, y=Carb.uL, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
 #  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
   #  ylim(0,0.5) +
-  geom_text(position=position_jitterdodge(dodge.width=0.4))+
+  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg~uL))) + #Axis titles
   theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
@@ -277,3 +288,43 @@ We get the same answer with very minor differences using the curves. so we will 
 # **Calculate Ratio of host:holobiont**   
 
 Calculate the ratio of host:holobiont carbohydrates 
+
+Calculate the average host and average holobiont signal for each sample.  
+```{r}
+ratios<-Samples%>%
+  filter(!Treatment=="Astrangia")%>%
+  select(Sample.ID, Treatment, Fraction, Carb.uL)%>%
+  group_by(Sample.ID, Fraction, Treatment)%>%
+  dplyr::summarise(mean_carbs=mean(Carb.uL))%>%
+  spread(Fraction, mean_carbs)%>%
+  mutate(ratio=Host/Holobiont)
+  
+```
+
+
+Plot Host:Holobiont ratios  
+
+```{r}
+Ratio.Plot <- ratios%>%
+  ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  scale_fill_manual(values=c("lightblue", "red1"))+
+  #  ylim(0,0.5) +
+  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
+  xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrates")) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  #  theme(axis.text = element_text(size = 30, color = "black"),
+  #        axis.title = element_text(size = 36, color = "black")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot 
+```
+
+Test for differences with an anova.  
+
+```{r}
+model<-aov(ratio~Treatment, data=ratios)
+summary(model)
+```
+

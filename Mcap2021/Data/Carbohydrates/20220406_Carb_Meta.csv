@@ -170,7 +170,7 @@ G-Holo,20220406,1,H9,Sample,NA,G,Ambient,Holobiont,25
 H-Host,20220406,1,A10,Sample,NA,H,Ambient,Host,25
 H-Holo,20220406,1,B10,Sample,NA,H,Ambient,Holobiont,25
 I-Host,20220406,1,C10,Sample,NA,I,Ambient,Host,25
-T-Holo,20220406,1,D10,Sample,NA,T,Ambient,Holobiont,25
+T-Holo,20220406,1,D10,Sample,NA,T,High,Holobiont,25
 J-Host,20220406,1,E10,Sample,NA,J,Ambient,Host,25
 J-Holo,20220406,1,F10,Sample,NA,J,Ambient,Holobiont,25
 K-Host,20220406,1,G10,Sample,NA,K,Ambient,Host,25
@@ -178,7 +178,7 @@ K-Holo,20220406,1,H10,Sample,NA,K,Ambient,Holobiont,25
 H-Host,20220406,1,A11,Sample,NA,H,Ambient,Host,25
 H-Holo,20220406,1,B11,Sample,NA,H,Ambient,Holobiont,25
 I-Host,20220406,1,C11,Sample,NA,I,Ambient,Host,25
-T-Holo,20220406,1,D11,Sample,NA,T,Ambient,Holobiont,25
+T-Holo,20220406,1,D11,Sample,NA,T,High,Holobiont,25
 J-Host,20220406,1,E11,Sample,NA,J,Ambient,Host,25
 J-Holo,20220406,1,F11,Sample,NA,J,Ambient,Holobiont,25
 K-Host,20220406,1,G11,Sample,NA,K,Ambient,Host,25
