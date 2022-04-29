@@ -1,0 +1,231 @@
+---
+title: "Cell Count Analysis"
+author: "AS Huffmyer"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+Script to analyze symbiont density.  
+
+# **Setup**  
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r setup, include = FALSE}
+## install packages if you dont already have them
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("RColorBrewer")) install.packages("RColorBrewer")
+if (!require("car")) install.packages("car")
+if (!require("emmeans")) install.packages("emmeans")
+if (!require("multcomp")) install.packages("multcomp")
+if (!require("knitr")) install.packages("knitr")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("lme4")) install.packages("lme4")
+if (!require("GGally")) install.packages("GGally")
+if (!require("lmerTest")) install.packages("lmerTest")
+if (!require("cowplot")) install.packages("cowplot")
+
+# load packages
+library(ggplot2)
+library(RColorBrewer)
+library(car)
+library(emmeans)
+library(multcomp)
+library(knitr)
+library(kableExtra)
+library(lme4)
+library(GGally)
+library(lmerTest)
+library(cowplot)
+library(Hmisc)
+library(tidyverse)
+library(dplyr)
+```
+
+# **Symbiont Density**    
+
+Import and manipulate data  
+```{r}
+# Cell count data
+sym_counts <- read.csv("Mcap2021/Data/Cells/cell_counts.csv")
+
+```
+
+Calculate cells and normalize to total protein.  
+```{r}
+# Calculate mean counts for each sample
+df <- sym_counts %>%
+  dplyr::select(TubeID, Squares_counted, Sample.ID, matches("Count[1-6]")) %>%
+  gather("rep", "count", -TubeID, -Squares_counted, -Sample.ID) %>%
+  group_by(TubeID, Squares_counted, Sample.ID) %>%
+  dplyr::summarise(mean_count = mean(count, na.rm = TRUE))
+
+
+#Load in total volume of sample  
+volumes<-read.csv("Mcap2021/Data/Resuspension_volumes.csv")
+volumes<-dplyr::rename(volumes, TubeID=Tube.ID)
+
+df<-left_join(df, volumes)
+
+# Normalize counts by homogenate volume (ul)
+df <- df %>%
+  mutate(cells.mL = (mean_count * 10000) / Squares_counted,
+         cells = cells.mL * (Resuspension_volume/1000))
+        
+```
+
+This generated the total number of cells in each tube. 
+
+Now normalized to total protein.   
+
+First, calculate protein per uL from the "Holo" tube for each sample. 
+
+```{r}
+protein<-read.csv("Mcap2021/Output/Protein/protein_output.csv")
+
+protein<-protein%>%
+  dplyr::rename(TubeID=Tube.ID)
+
+protein<-left_join(protein, volumes)
+
+protein$protein.ug.uL<-protein$Protein.ug/protein$Resuspension_volume
+
+protein<-protein%>%
+  filter(Fraction=="Holobiont")
+```
+
+Second, divide the total number of cells by the resuspension volume to obtain cells per uL 
+
+```{r}
+df$cells.uL=df$cells/df$Resuspension_volume
+```
+
+Third, normalize cells per uL / protein per uL to obtain cells per ug protein
+
+```{r}
+all<-left_join(df, protein, by="Sample.ID")
+
+all$cells.ugprotein=all$cells.uL/all$protein.ug.uL
+```
+
+Output data frame.  
+
+```{r}
+all%>%
+  dplyr::select(TubeID.x, Sample.ID, cells, cells.uL, cells.ugprotein, Resuspension_volume.x, Treatment)%>%
+  dplyr::rename(Tube.ID=TubeID.x, Resuspension_volume=Resuspension_volume.x)%>%
+  write_csv("Mcap2021/Output/Cells/cells_output.csv")
+```
+
+### Plotting  
+
+Plot cells per unit protein data with mean and standard error.   
+
+```{r}
+all %>%
+  filter(!Sample.ID=="H")%>%
+  ggplot(aes(x = Treatment, y = cells.ugprotein, color = Treatment)) +
+  labs(x = "",y = "Cell Density per ug protein") +
+  scale_color_manual(values=c("blue", "red"))+
+  geom_jitter(width = 0.05) +                                            # Plot all points
+  geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+  stat_summary(fun.data = mean_cl_normal, fun.args = list(mult = 1),    # Plot standard error
+               geom = "errorbar", color = "black", width = 0.5) +
+  stat_summary(fun = mean, geom = "point", color = "black") + # Plot mean
+  theme_classic()
+```
+
+
+Present means and standard error of each group and save summary table.  
+
+```{r}
+all%>%
+  group_by(Treatment)%>%
+    filter(!Sample.ID=="H")%>%
+  summarise(n=length(cells.ugprotein),
+            Mean=format(round(mean(cells.ugprotein), 0), 0), 
+            SE=format(round(sd(cells.ugprotein)/sqrt(length(cells.ugprotein)),0),0))%>%
+  kbl(caption="Descriptive statistics of Symbiodiniaceae cell densities")%>%
+  kable_classic(full_width=FALSE, html_font="Arial")%>%
+  row_spec(0, bold = TRUE) 
+```
+
+Plot data as a scatterplot with labels for each sample.    
+```{r}
+symb_plot<-all %>%
+    filter(!Sample.ID=="H")%>%
+    droplevels()%>%
+    ggplot(., aes(x = as.factor(Treatment), y = cells.ugprotein)) +
+    geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=4, position = position_jitterdodge(0.1)) + 
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    #scale_fill_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"))+
+    ylab(expression(bold(paste("Symbiont cells ug protein"))))+
+    #ylim(0,9000)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); symb_plot
+
+```
+
+Plot data as box plot  
+```{r}
+symb_plot2<-all %>%
+    filter(!Sample.ID=="H")%>%
+    ggplot(., aes(x = as.factor(Treatment), y = cells.ugprotein)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    #geom_smooth(method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    #scale_fill_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"))+
+    #scale_color_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"), guide="none")+
+    ylab(expression(bold(paste("Symbiont cells ug protein"))))+
+    #ylim(0,9000)+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); symb_plot2
+
+```
+
+### Statistical analysis  
+
+Run ANOVA on cells per protein treatment.    
+```{r}
+sym_model_data<-all%>%
+      filter(!Sample.ID=="H")%>%
+      droplevels()
+
+sym_model<-aov(cells.ugprotein~Treatment, data=sym_model_data)
+summary(sym_model)
+qqPlot(residuals(sym_model))
+leveneTest(residuals(sym_model)~Treatment, data=sym_model_data)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference.  
+
+

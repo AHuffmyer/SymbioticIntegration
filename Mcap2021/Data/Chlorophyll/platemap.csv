@@ -1,0 +1,97 @@
+Well,Tube.ID,Sample.Type,Volume
+A1,BLANK-1,Blank,200
+B1,A,Sample ,200
+C1,B ,Sample ,200
+D1,E,Sample ,200
+E1,C,Sample ,200
+F1,NA,Sample ,200
+G1,NA,Sample ,200
+H1,NA,Sample ,200
+A2,BLANK-2,Blank,200
+B2,A,Sample ,200
+C2,B ,Sample ,200
+D2,E,Sample ,200
+E2,C,Sample ,200
+F2,NA,NA,NA
+G2,NA,NA,NA
+H2,NA,NA,NA
+A3,NA,NA,NA
+B3,S,Sample ,200
+C3,K,Sample ,200
+D3,G,Sample ,200
+E3,NA,NA,NA
+F3,NA,NA,NA
+G3,NA,NA,NA
+H3,NA,NA,NA
+A4,N ,Sample ,200
+B4,S,Sample ,200
+C4,K,Sample ,200
+D4,G,Sample ,200
+E4,NA,NA,NA
+F4,NA,NA,NA
+G4,NA,NA,NA
+H4,NA,NA,NA
+A5,R,Sample ,200
+B5,O,Sample ,200
+C5,W,Sample ,200
+D5,L,Sample ,200
+E5,NA,NA,NA
+F5,NA,NA,NA
+G5,NA,NA,NA
+H5,NA,NA,NA
+A6,R,Sample ,200
+B6,O,Sample ,200
+C6,W,Sample ,200
+D6,L,Sample ,200
+E6,NA,NA,NA
+F6,NA,NA,NA
+G6,NA,NA,NA
+H6,NA,NA,NA
+A7,I,Sample ,200
+B7,P,Sample ,200
+C7,Q,Sample ,200
+D7,U,Sample ,200
+E7,NA,NA,NA
+F7,NA,NA,NA
+G7,NA,NA,NA
+H7,NA,NA,NA
+A8,I,Sample ,200
+B8,P,Sample ,200
+C8,Q,Sample ,200
+D8,U,Sample ,200
+E8,NA,NA,NA
+F8,NA,NA,NA
+G8,NA,NA,NA
+H8,NA,NA,NA
+A9,J,Sample ,200
+B9,D,Sample ,200
+C9,T ,Sample ,200
+D9,H,Sample ,200
+E9,NA,NA,NA
+F9,NA,NA,NA
+G9,NA,NA,NA
+H9,NA,NA,NA
+A10,J,Sample ,200
+B10,D,Sample ,200
+C10,T ,Sample ,200
+D10,H,Sample ,200
+E10,NA,NA,NA
+F10,NA,NA,NA
+G10,NA,NA,NA
+H10,NA,NA,NA
+A11,V,Sample ,200
+B11,X,Sample ,200
+C11,M,Sample ,200
+D11,F,Sample ,200
+E11,NA,NA,NA
+F11,NA,NA,NA
+G11,NA,NA,NA
+H11,NA,NA,NA
+A12,V,Sample ,200
+B12,X,Sample ,200
+C12,M,Sample ,200
+D12,F,Sample ,200
+E12,NA,NA,NA
+F12,NA,NA,NA
+G12,NA,NA,NA
+H12,NA,NA,NA
