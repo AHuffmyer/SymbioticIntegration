@@ -12,7 +12,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-Script to analyze symbiont density.  
+Script to analyze symbiont density for the Mcap 2021 Symbiont Integration project.  
 
 # **Setup**  
 

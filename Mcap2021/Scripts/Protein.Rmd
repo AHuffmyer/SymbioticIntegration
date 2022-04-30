@@ -13,14 +13,14 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-This script analyzes and plots data for Symbiotic Integration 2021 survival data. 
+This script analyzes and plots data for Symbiotic Integration 2021 protein data. 
 
 # **Setup**  
 
 Load libraries. 
 
 ```{r}
-library(dbplyr)
+library(dplyr)
 library(readr)
 library(stringr)
 library(gridExtra)
