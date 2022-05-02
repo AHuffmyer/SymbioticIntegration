@@ -127,6 +127,7 @@ Carb.Plot.samples <- Samples%>%
   filter(!Treatment=="Astrangia")%>%
   ggplot(aes(x=Tube.ID, y=Carb.mg, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+   #scale_fill_manual(values=c("blue", "red"))+
 #  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
   #  ylim(0,0.5) +
@@ -149,15 +150,10 @@ Carb.Plot <- Samples%>%
   filter(!Sample.ID=="H")%>%
   ggplot(aes(x=Treatment, y=Carb.mg, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot 
 ```
 
@@ -242,7 +238,6 @@ Samples.all$Carb.mg <- (Samples.all$Concentration * (Samples.all$Resuspension_vo
 #the second term here needs to be the total amount in the host or holobiont tube that we pulled from 
 #needs to be VOLUME from this page: https://docs.google.com/spreadsheets/d/1kE8Yamrzdh5VDtieGuJGIl37WnuAOXeknBqTraglg3k/edit#gid=316770111
 #can call resuspension volume
-#need to get these values from Jill 
 
 #then the third term is our "input" volume (called Homo_vol here)
 
@@ -256,15 +251,10 @@ Carb.Plot.all <- Samples.all%>%
   filter(!Treatment=="Astrangia")%>%
   ggplot(aes(x=Treatment, y=Carb.mg, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.all 
 ```
 
@@ -306,16 +296,11 @@ Plot Host:Holobiont ratios
 Ratio.Plot <- ratios%>%
   ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  scale_fill_manual(values=c("lightblue", "red1"))+
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
+   scale_fill_manual(values=c("blue", "red"))+
   xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrates")) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot 
 ```
 
@@ -327,7 +312,6 @@ summary(model)
 ```
 
 There is a significant difference in Host:Holobiont ratios of carbohydrates at high temperature.  
-
 
 # **Normalize to protein values**  
 
@@ -360,15 +344,10 @@ Plot.
 Carb.Plot.norm <- Samples_norm%>%
   ggplot(aes(x=Treatment, y=Carb.normalized, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (ug/ug))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.norm 
 ```
 
@@ -395,16 +374,11 @@ Plot ratios.
 Ratio.Plot.norm <- ratios_norm%>%
   ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  scale_fill_manual(values=c("lightblue", "red1"))+
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
+   scale_fill_manual(values=c("blue", "red"))+
   xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrates")) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot.norm 
 ```
 
@@ -454,16 +428,11 @@ Carb.Plot.cells.holo <- cells_data_holo%>%
   filter(!Sample.ID=="H")%>%
   ggplot(aes(x=Treatment, y=Carb.ug.cell, fill = Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  +
   scale_fill_manual(values=c("blue", "red"))+
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Holobiont Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.holo 
 ```
 
@@ -476,7 +445,6 @@ cells_data_model_holo<-cells_data_holo%>%
 model<-aov(Carb.ug.cell~Treatment, data=cells_data_model_holo)
 summary(model)
 ```
-
 
 ## Host  
 
@@ -515,16 +483,11 @@ Carb.Plot.cells.host <- cells_data_host%>%
   filter(Carb.ug.cell>0.003)%>%
   ggplot(aes(x=Treatment, y=Carb.ug.cell, fill = Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  +
   scale_fill_manual(values=c("blue", "red"))+
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Host Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.host 
 ```
 
@@ -569,20 +532,13 @@ Plot.
 Carb.Plot.cells.ratio <- ratios_cells%>%
   filter(!Sample.ID=="H")%>%
   filter(!Sample.ID=="L")%>%
-  #filter(Carb.ug.cell<0.02)%>%
-  #filter(Carb.ug.cell>0.003)%>%
   ggplot(aes(x=Treatment, y=ratio, fill = Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  +
   scale_fill_manual(values=c("blue", "red"))+
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.ratio 
 ```
 

@@ -69,7 +69,6 @@ Standard.1 <- data.1 %>%
   filter(Run==1)
 
 Standard.plot.1 <- ggplot(data = Standard.1, aes(x=Concentration, y=abs.corr))+
-  #facet_grid(~Run)+
   ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
   geom_point()+
   geom_smooth(method = "lm") +
@@ -94,7 +93,6 @@ Standard.2 <- data.1 %>%
   filter(Run==2)
 
 Standard.plot.2 <- ggplot(data = Standard.2, aes(x=Concentration, y=abs.corr))+
-  #facet_grid(~Run)+
   ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
   geom_point()+
   geom_smooth(method = "lm") +
@@ -119,7 +117,6 @@ Standard.3 <- data.1 %>%
   filter(Run==3)
 
 Standard.plot.3 <- ggplot(data = Standard.3, aes(x=Concentration, y=abs.corr))+
-  #facet_grid(~Run)+
   ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
   geom_point()+
   geom_smooth(method = "lm") +
@@ -144,7 +141,6 @@ Standard <- data.1 %>%
   filter(Sample.Type == "Standard")
 
 Standard.plot <- ggplot(data = Standard, aes(x=Concentration, y=abs.corr))+
-  #facet_grid(~Run)+
   ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
   geom_point()+
   geom_smooth(method = "lm") +
@@ -175,7 +171,7 @@ Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to 
 ```
 
 
-Normalizing to homogenization volume WORKING ON THIS
+Normalizing to homogenization volume 
 
 Need to account for dilution (here it will be 25/10) - normally 25 but we used 10
 Also need to account for resuspension volume (see carbs script)
@@ -198,15 +194,10 @@ Protein.Plot <- Samples%>%
   filter(!Treatment=="Astrangia")%>%
   ggplot(aes(x=Treatment, y=Protein.ug, fill = Fraction)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (ug))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Protein.Plot 
 ```
 
@@ -244,16 +235,11 @@ Plot Host:Holobiont ratios
 Ratio.Plot <- ratios%>%
   ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
   geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-#  stat_summary(fun=mean, aes(group=Fraction, color = Fraction), position = position_dodge(width = 0.5))  + 
   geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
   scale_fill_manual(values=c("lightblue", "red1"))+
-  #  ylim(0,0.5) +
-  #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Host:Holobiont Protein")) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  #  theme(axis.text = element_text(size = 30, color = "black"),
-  #        axis.title = element_text(size = 36, color = "black")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot 
 ```
 
@@ -271,7 +257,7 @@ Samples%>%
   filter(!Treatment=="Astrangia")%>%
   select(Tube.ID, Sample.ID, Treatment, Fraction, Protein.ug)%>%
   group_by(Tube.ID, Sample.ID, Treatment, Fraction)%>%
-  summarise(Protein.ug=mean(Protein.ug))%>%
+  dplyr::summarise(Protein.ug=mean(Protein.ug))%>%
   write.csv(., "Mcap2021/Output/Protein/protein_output.csv")
 ```
 

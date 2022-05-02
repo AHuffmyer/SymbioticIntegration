@@ -170,6 +170,7 @@ Summarize by sample for ChlA and ChlC2.
 ```{r}
 df_mean<-df%>%
   filter(Sample.Type=="Sample")%>%
+  filter(!Sample.ID=="H")%>%
   drop_na()%>%
   group_by(Sample.ID, Tube.ID, Treatment, Fraction, Resuspension_volume)%>%
   dplyr::summarise(mean_chlA.ug.ul=mean(chlA.ug.uL), mean_chlC2.ug.ul=mean(chlC2.ug.uL))%>%
@@ -224,16 +225,12 @@ chlA_protein_plot<-df_mean %>%
     #filter(!Sample.ID=="H")%>%
     ggplot(., aes(x = as.factor(Treatment), y = chlA.ug.protein.ug)) +
     geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
-    #geom_smooth(method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
     geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
     scale_fill_manual(values=c("blue", "red"))+
   scale_color_manual(values=c("blue", "red"))+
     geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
     xlab("Treatment") + 
-    #scale_fill_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"))+
-    #scale_color_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"), guide="none")+
     ylab(expression(bold(paste("ChlA ug protein ug"))))+
-    #ylim(0,9000)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -248,8 +245,8 @@ Run ANOVA.
 ```{r}
 chla_prot_model<-aov(chlA.ug.protein.ug~Treatment, data=df_mean)
 summary(chla_prot_model)
-qqPlot(residuals(chla_prot_model))
-leveneTest(residuals(chla_prot_model)~Treatment, data=df_mean)
+car::qqPlot(residuals(chla_prot_model))
+car::leveneTest(residuals(chla_prot_model)~Treatment, data=df_mean)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -262,16 +259,12 @@ chlC2_protein_plot<-df_mean %>%
     #filter(!Sample.ID=="H")%>%
     ggplot(., aes(x = as.factor(Treatment), y = chlC2.ug.protein.ug)) +
     geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
-    #geom_smooth(method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
     geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
     scale_fill_manual(values=c("blue", "red"))+
   scale_color_manual(values=c("blue", "red"))+
     geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
     xlab("Treatment") + 
-    #scale_fill_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"))+
-    #scale_color_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"), guide="none")+
     ylab(expression(bold(paste("ChlC2 ug protein ug"))))+
-    #ylim(0,9000)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -286,8 +279,8 @@ Run ANOVA.
 ```{r}
 chlc2_prot_model<-aov(chlC2.ug.protein.ug~Treatment, data=df_mean)
 summary(chlc2_prot_model)
-qqPlot(residuals(chlc2_prot_model))
-leveneTest(residuals(chlc2_prot_model)~Treatment, data=df_mean)
+car::qqPlot(residuals(chlc2_prot_model))
+car::leveneTest(residuals(chlc2_prot_model)~Treatment, data=df_mean)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -300,16 +293,12 @@ chl.total_protein_plot<-df_mean %>%
     #filter(!Sample.ID=="H")%>%
     ggplot(., aes(x = as.factor(Treatment), y = total.chl.ug.protein.ug)) +
     geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
-    #geom_smooth(method="loess", se=TRUE, fullrange=TRUE, level=0.95, color="black") +
     geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
     scale_fill_manual(values=c("blue", "red"))+
   scale_color_manual(values=c("blue", "red"))+
     geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
     xlab("Treatment") + 
-    #scale_fill_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"))+
-    #scale_color_manual(name="Lifestage", values=c("#8C510A", "#DFC27D","#80CDC1", "#003C30"), guide="none")+
     ylab(expression(bold(paste("Total chl ug protein ug"))))+
-    #ylim(0,9000)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -324,20 +313,141 @@ Run ANOVA.
 ```{r}
 chl.total_prot_model<-aov(total.chl.ug.protein.ug~Treatment, data=df_mean)
 summary(chl.total_prot_model)
-qqPlot(residuals(chl.total_prot_model))
-leveneTest(residuals(chl.total_prot_model)~Treatment, data=df_mean)
+car::qqPlot(residuals(chl.total_prot_model))
+car::leveneTest(residuals(chl.total_prot_model)~Treatment, data=df_mean)
 ```
 
 Both normality and homogeneity of variance pass.   
 
 No significant difference. 
 
-
-
-
-
-
 # **Normalize to cell density**  
 
+First, pull out cells per uL from the "Holo" tube for each sample, from which we took the symbiont sample.   
 
-NEED TO DO THIS PART AND LOOK AT OUTLIERS 
+```{r}
+cells<-read.csv("Mcap2021/Output/Cells/cells_output.csv")
+
+cells<-cells%>%
+  dplyr::select(Sample.ID, Treatment, cells.uL)%>%
+  dplyr::rename(Tube.ID=Sample.ID)
+
+```
+
+Next, divide chlA and chlC2 (ug.uL) by cells (uL) for each sample.  
+
+```{r}
+df_mean$cells.uL<-cells$cells.uL[match(df_mean$Tube.ID, cells$Tube.ID)]
+```
+
+Normalize to total protein.  
+
+```{r}
+df_mean$chlA.ug.cell<-df_mean$mean_chlA.ug.ul/df_mean$cells.uL
+df_mean$chlC2.ug.cell<-df_mean$mean_chlC2.ug.ul/df_mean$cells.uL
+df_mean$total.chl.ug.cell<-df_mean$total.chl.ug.uL/df_mean$cells.uL
+```
+
+Plot results.  
+
+## ChlA
+```{r}
+chlA_cell_plot<-df_mean %>%
+    #filter(!Sample.ID=="H")%>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlA.ug.cell)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlA ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlA_cell_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chla_cell_model<-aov(chlA.ug.cell~Treatment, data=df_mean)
+summary(chla_cell_model)
+car::qqPlot(residuals(chla_cell_model))
+car::leveneTest(residuals(chla_cell_model)~Treatment, data=df_mean)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference.  
+
+## ChlC2
+```{r}
+chlC2_cell_plot<-df_mean %>%
+    #filter(!Sample.ID=="H")%>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlC2.ug.cell)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlC2 ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlC2_cell_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chlc2_cell_model<-aov(chlC2.ug.cell~Treatment, data=df_mean)
+summary(chlc2_cell_model)
+car::qqPlot(residuals(chlc2_cell_model))
+car::leveneTest(residuals(chlc2_cell_model)~Treatment, data=df_mean)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference.  
+
+## Total chlorophyll
+```{r}
+chl.total_cell_plot<-df_mean %>%
+    #filter(!Sample.ID=="H")%>%
+    ggplot(., aes(x = as.factor(Treatment), y = total.chl.ug.cell)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("Total chl ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chl.total_cell_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chl.total_cell_model<-aov(total.chl.ug.cell~Treatment, data=df_mean)
+summary(chl.total_cell_model)
+car::qqPlot(residuals(chl.total_cell_model))
+car::leveneTest(residuals(chl.total_cell_model)~Treatment, data=df_mean)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference. 
