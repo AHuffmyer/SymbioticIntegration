@@ -1,0 +1,158 @@
+---
+title: Size analysis 
+author: "AS Huffmyer"
+date: '2022'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiotic Integration 2021 larval size 
+
+# **Setup**  
+
+Load libraries. 
+
+```{r}
+library(dplyr)
+library(readr)
+library(stringr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(Rmisc)
+library(ggpubr)
+library(lsmeans)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(car)
+library(emmeans)
+```
+
+# **Load data**  
+
+```{r}
+size<-read_csv("Mcap2021/Data/SIze/larval_size.csv")
+```
+
+# **Visualize**  
+
+Visualize by timepoint and treatment.  
+
+```{r}
+size_plot<-size %>%
+    ggplot(., aes(x = as.factor(timepoint), y = volume.mm3)) +
+    geom_boxplot(aes(color=treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("Timepoint") + 
+    ylab(expression(bold(paste("Larval size mm3"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); size_plot
+```
+
+Summarize by tube.  
+
+```{r}
+size_plot_2<-size %>%
+    group_by(tube.ID, treatment, tank, timepoint)%>%
+    dplyr::summarise(mean=mean(volume.mm3))%>%
+  
+    ggplot(., aes(x = as.factor(timepoint), y = mean)) +
+    geom_boxplot(aes(color=treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("Timepoint") + 
+    ylab(expression(bold(paste("Larval size mm3"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); size_plot_2
+```
+
+Larvae grow over the course of the experiment.  
+
+Visualize just at the end.  
+
+```{r}
+size_plot_3<-size %>%
+    filter(timepoint=="Sampling")%>%
+  
+    ggplot(., aes(x = as.factor(treatment), y = volume.mm3)) +
+    geom_boxplot(aes(color=treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("Larval size mm3"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); size_plot_3
+```
+
+Group by tube at the end time point.  
+```{r}
+size_plot_4<-size %>%
+    group_by(tube.ID, treatment, tank, timepoint)%>%
+    dplyr::summarise(mean=mean(volume.mm3))%>%
+    filter(timepoint=="Sampling")%>%
+  
+    ggplot(., aes(x = as.factor(treatment), y = mean)) +
+    geom_boxplot(aes(color=treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("Larval size mm3"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); size_plot_4
+```
+
+# **Linear models**  
+
+Run anova model between time points.  
+```{r}
+model1<-aov(volume.mm3~timepoint, data=size)
+summary(model1)
+qqPlot(residuals(model1))
+```
+
+Size is different between time points.  
+
+Run linear mixed effect model at the ending time points.  
+```{r}
+model_data<-size%>%
+  filter(timepoint=="Sampling")
+
+model2<-aov(volume.mm3~treatment, data=model_data)
+summary(model2)
+
+qqPlot(residuals(model2))
+```
