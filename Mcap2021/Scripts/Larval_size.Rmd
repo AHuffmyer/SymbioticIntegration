@@ -40,7 +40,7 @@ library(emmeans)
 # **Load data**  
 
 ```{r}
-size<-read_csv("Mcap2021/Data/SIze/larval_size.csv")
+size<-read_csv("Mcap2021/Data/Size/larval_size.csv")
 ```
 
 # **Visualize**  

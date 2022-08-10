@@ -38,12 +38,15 @@ temps<-temps%>%
 temps$DateTime<-as.POSIXct(temps$DateTime, format="%m/%d/%y %H:%M")
 
 temp_plot<-ggplot(temps)+
-    geom_vline(xintercept=as.numeric(temps$DateTime[2000]), linetype="dashed", color="black", size=0.75)+
+     geom_vline(xintercept=as.numeric(temps$DateTime[1]), linetype="dotted", color="black", size=0.75)+
+    geom_vline(xintercept=as.numeric(temps$DateTime[2920]), linetype="dashed", color="black", size=0.75)+
      geom_vline(xintercept=as.numeric(temps$DateTime[5500]), linetype="solid", color="black", size=0.75)+
     geom_point(aes(DateTime,Temp,color=Treatment),alpha=0.3,size=1)+
      scale_color_manual(values=c("blue","red"))+
-     geom_smooth(aes(DateTime,Temp,color=Treatment),se=FALSE,span=0.15,size=1)+
+     #geom_smooth(aes(DateTime,Temp,color=Treatment),se=FALSE,span=0.15,size=1)+
      scale_x_datetime(date_breaks="2 days",minor_breaks=waiver(),labels=date_format("%m-%d"))+
+     geom_text(x=as.POSIXct("2021-06-14 18:00:00"), y=31.5, label="*", size=10)+
+     geom_text(x=as.POSIXct("2021-06-17 18:00:00"), y=31.7, label="+", size=9)+
      ylim(24.5, 32)+
      ylab(expression(bold("Temperature (°C)")))+
      xlab(expression(bold("Date")))+
@@ -56,12 +59,23 @@ temp_plot<-ggplot(temps)+
       legend.text=element_text(size=12)
       ); temp_plot
 
-temps%>%group_by(Treatment)%>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
-
 ggsave(filename="Mcap2021/Figures/Temperatures.png", plot=temp_plot, dpi=500, width=8.5, height=5, units="in")
 ```
 
+Display mean temperatures during embryo rearing period. 
+```{r}
+temps%>% filter(DateTime < as.POSIXct("2021-06-15 08:00:00")) %>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
+```
 
+Display mean temperatures during larval period. 
+```{r}
+temps%>% filter(DateTime > as.POSIXct("2021-06-15 08:00:00"))%>% filter(DateTime < as.POSIXct("2021-06-18 18:30:00"))%>% group_by(Treatment)%>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
+```
+
+Display mean temperatures during settlement period. 
+```{r}
+temps%>% filter(DateTime > as.POSIXct("2021-06-19 08:00:00"))%>% group_by(Treatment)%>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
+```
 
 
 
