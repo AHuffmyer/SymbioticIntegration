@@ -324,6 +324,7 @@ chl.total_protein_plot_b<-df_mean %>%
     xlab("Treatment") + 
     ylim(30, 140)+
     ylab(expression(bold(paste("Total chlorophyll (ug ug protein"^-1, ")"))))+
+    geom_text(x=1.5, y=35, label="p=0.455", color="darkgray", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -331,9 +332,6 @@ chl.total_protein_plot_b<-df_mean %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14)
       ); chl.total_protein_plot_b
-
-#Save plot
-ggsave(chl.total_protein_plot_b, file="Mcap2021/Figures/chlorophyll_protein.png", w=4, h=4)
 ```
 
 Run ANOVA.    
@@ -473,7 +471,6 @@ chl.total_cell_plot_b<-df_mean %>%
     dplyr::group_by(Treatment)%>%
     dplyr::summarise(mean=mean(total.chl.ug.cell), se=sd(total.chl.ug.cell)/sqrt(length(total.chl.ug.cell)))%>%
   
-  
     ggplot(., aes(x = as.factor(Treatment), y = mean)) +
     geom_point(aes(fill=Treatment), pch = 21, size=8) +
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
@@ -482,6 +479,7 @@ chl.total_cell_plot_b<-df_mean %>%
     xlab("Treatment") + 
     ylim(0.05, 0.3)+
     ylab(expression(bold(paste("Total chlorophyll (ug cell"^-1, ")"))))+
+    geom_text(x=1.5, y=0.08, label="p=0.935", color="darkgray", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -490,8 +488,6 @@ chl.total_cell_plot_b<-df_mean %>%
       legend.title=element_text(face="bold", size=14)
       ); chl.total_cell_plot_b
 
-#Save plot
-ggsave(chl.total_cell_plot_b, file="Mcap2021/Figures/chlorophyll_cell.png", w=4, h=4)
 ```
 
 Run ANOVA.    
@@ -505,3 +501,10 @@ car::leveneTest(residuals(chl.total_cell_model)~Treatment, data=df_mean)
 Both normality and homogeneity of variance pass.   
 
 No significant difference. 
+
+# Assemble plots  
+Generate a figure with panel of carbohydrate metrics.  
+```{r}
+chl.plot<-plot_grid(chl.total_protein_plot_b, chl.total_cell_plot_b, nrow=1, ncol=2)
+ggsave(chl.plot, file="Mcap2021/Figures/Chlorophyll_panel.png", width=8, height=5)
+```

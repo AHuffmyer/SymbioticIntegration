@@ -222,6 +222,7 @@ symb_plot2_b<-all %>%
     xlab("Treatment") + 
     ylim(200, 600)+
     ylab(expression(bold(paste("Symbiodiniaceae cells (ug protein"^-1, ")"))))+
+    geom_text(x=1.5, y=250, label="p=0.267", color="darkgray", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -231,7 +232,7 @@ symb_plot2_b<-all %>%
       ); symb_plot2_b
 
 #Save plot
-ggsave(symb_plot2_b, file="Mcap2021/Figures/symbiont_density.png", w=4, h=4)
+ggsave(symb_plot2_b, file="Mcap2021/Figures/symbiont_density.png", w=4, h=5)
 ```
 
 

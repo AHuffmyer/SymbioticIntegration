@@ -127,6 +127,7 @@ size_plot_3b<-size %>%
     xlab("Treatment") + 
     ylim(0.07, 0.1)+
     ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
+    geom_text(x=1.5, y=0.073, label="p<0.01", color="black", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -137,7 +138,7 @@ size_plot_3b<-size %>%
       ); size_plot_3b
 
 #Save plot
-ggsave(size_plot_3b, file="Mcap2021/Figures/size.png", w=4, h=4)
+ggsave(size_plot_3b, file="Mcap2021/Figures/size.png", w=4, h=5)
 ```
 
 Group by tube at the end time point.  
