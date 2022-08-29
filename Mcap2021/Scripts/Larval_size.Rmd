@@ -55,7 +55,7 @@ size_plot<-size %>%
     scale_fill_manual(values=c("blue", "red"))+
     scale_color_manual(values=c("blue", "red"))+
     xlab("Timepoint") + 
-    ylab(expression(bold(paste("Larval size mm3"))))+
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -78,7 +78,7 @@ size_plot_2<-size %>%
     scale_fill_manual(values=c("blue", "red"))+
     scale_color_manual(values=c("blue", "red"))+
     xlab("Timepoint") + 
-    ylab(expression(bold(paste("Larval size mm3"))))+
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -93,7 +93,7 @@ Larvae grow over the course of the experiment.
 Visualize just at the end.  
 
 ```{r}
-size_plot_3<-size %>%
+size_plot_3a<-size %>%
     filter(timepoint=="Sampling")%>%
   
     ggplot(., aes(x = as.factor(treatment), y = volume.mm3)) +
@@ -102,14 +102,42 @@ size_plot_3<-size %>%
     scale_fill_manual(values=c("blue", "red"))+
     scale_color_manual(values=c("blue", "red"))+
     xlab("Treatment") + 
-    ylab(expression(bold(paste("Larval size mm3"))))+
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
     theme_classic() + 
     theme(
       legend.position="right",
       axis.title=element_text(face="bold", size=14),
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14)
-      ); size_plot_3
+      ); size_plot_3a
+```
+
+Plot with points and std. error bars.  
+```{r}
+size_plot_3b<-size %>%
+    filter(timepoint=="Sampling")%>%
+    group_by(treatment)%>%
+    dplyr::summarise(mean=mean(volume.mm3), se=sd(volume.mm3)/sqrt(length(volume.mm3)))%>%
+
+    ggplot(., aes(x = as.factor(treatment), y = mean)) +
+    geom_point(aes(fill=treatment), pch = 21, size=8, position = position_dodge(0.2)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), pch = 21, size=2, position = position_dodge(0.2), width=0) + 
+    scale_fill_manual(name="Treatment", values=c("blue", "red"))+
+    scale_color_manual(name="Treatment", values=c("blue", "red"))+
+    xlab("Treatment") + 
+    ylim(0.07, 0.1)+
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      legend.text=element_text(size=14),
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); size_plot_3b
+
+#Save plot
+ggsave(size_plot_3b, file="Mcap2021/Figures/size.png", w=4, h=4)
 ```
 
 Group by tube at the end time point.  
@@ -125,7 +153,7 @@ size_plot_4<-size %>%
     scale_fill_manual(values=c("blue", "red"))+
     scale_color_manual(values=c("blue", "red"))+
     xlab("Treatment") + 
-    ylab(expression(bold(paste("Larval size mm3"))))+
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -133,13 +161,15 @@ size_plot_4<-size %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14)
       ); size_plot_4
+
 ```
 
 # **Linear models**  
 
 Run anova model between time points.  
 ```{r}
-model1<-aov(volume.mm3~timepoint, data=size)
+model1<-aov(volume.mm3~timepoint+treatment, data=size)
+
 summary(model1)
 qqPlot(residuals(model1))
 ```
@@ -152,7 +182,9 @@ model_data<-size%>%
   filter(timepoint=="Sampling")
 
 model2<-aov(volume.mm3~treatment, data=model_data)
+test<-lmer(volume.mm3~treatment+(1|tube.id:treatment), data=model_data)
 summary(model2)
+anova(test)
 
 qqPlot(residuals(model2))
 ```
