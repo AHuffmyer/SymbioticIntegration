@@ -120,8 +120,8 @@ size_plot_3b<-size %>%
     dplyr::summarise(mean=mean(volume.mm3), se=sd(volume.mm3)/sqrt(length(volume.mm3)))%>%
 
     ggplot(., aes(x = as.factor(treatment), y = mean)) +
-    geom_point(aes(fill=treatment), pch = 21, size=8, position = position_dodge(0.2)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), pch = 21, size=2, position = position_dodge(0.2), width=0) + 
+    geom_point(aes(fill=treatment), pch = 21, size=8) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), pch = 21, size=2, width=0) + 
     scale_fill_manual(name="Treatment", values=c("blue", "red"))+
     scale_color_manual(name="Treatment", values=c("blue", "red"))+
     xlab("Treatment") + 

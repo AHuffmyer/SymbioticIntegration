@@ -206,6 +206,35 @@ symb_plot2<-all %>%
 
 ```
 
+Plot symbiont density with plot and error bars.   
+```{r}
+symb_plot2_b<-all %>%
+    filter(!Sample.ID=="H")%>%
+    dplyr::group_by(Treatment)%>%
+    dplyr::summarise(mean=mean(cells.ugprotein), se=sd(cells.ugprotein)/sqrt(length(cells.ugprotein)))%>%
+  
+  
+    ggplot(., aes(x = as.factor(Treatment), y = mean)) +
+    geom_point(aes(fill=Treatment), pch = 21, size=8) +
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("Treatment") + 
+    ylim(200, 600)+
+    ylab(expression(bold(paste("Symbiodiniaceae cells (ug protein"^-1, ")"))))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); symb_plot2_b
+
+#Save plot
+ggsave(symb_plot2_b, file="Mcap2021/Figures/symbiont_density.png", w=4, h=4)
+```
+
+
 ### Statistical analysis  
 
 Run ANOVA on cells per protein treatment.    
