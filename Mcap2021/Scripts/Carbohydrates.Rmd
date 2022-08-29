@@ -552,3 +552,5 @@ ratios_cells_model<-ratios_cells%>%
 model<-aov(ratio~Treatment, data=ratios_cells_model)
 summary(model)
 ```
+# **Assemble figure panel**  
+

@@ -182,9 +182,7 @@ model_data<-size%>%
   filter(timepoint=="Sampling")
 
 model2<-aov(volume.mm3~treatment, data=model_data)
-test<-lmer(volume.mm3~treatment+(1|tube.id:treatment), data=model_data)
 summary(model2)
-anova(test)
 
 qqPlot(residuals(model2))
 ```
