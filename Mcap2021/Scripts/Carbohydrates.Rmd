@@ -637,7 +637,7 @@ summary(model)
 
 Generate a figure with panel of carbohydrate metrics.  
 ```{r}
-carbs.plot<-plot_grid(carb.host.prot, Carb.Plot.cells.host_b, Ratio.Plot_b, nrow=1, ncol=3)
+carbs.plot<-plot_grid(carb.host.prot, Carb.Plot.cells.host_b, Ratio.Plot_b, nrow=1, ncol=3, label_y=1, labels=c("A", "B", "C"), label_size=18)
 ggsave(carbs.plot, file="Mcap2021/Figures/Carbs_panel.png", width=12, height=5)
 ```
 
