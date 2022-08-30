@@ -479,7 +479,7 @@ chl.total_cell_plot_b<-df_mean %>%
     xlab("Treatment") + 
     ylim(0.05, 0.3)+
     ylab(expression(bold(paste("Total chlorophyll (ug cell"^-1, ")"))))+
-    geom_text(x=1.5, y=0.08, label="p=0.935", color="darkgray", size=8)+
+    geom_text(x=1.5, y=0.06, label="p=0.935", color="darkgray", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -505,6 +505,6 @@ No significant difference.
 # Assemble plots  
 Generate a figure with panel of carbohydrate metrics.  
 ```{r}
-chl.plot<-plot_grid(chl.total_protein_plot_b, chl.total_cell_plot_b, nrow=1, ncol=2)
+chl.plot<-plot_grid(chl.total_protein_plot_b, chl.total_cell_plot_b, nrow=1, ncol=2, label_y = 1, labels=c("A", "B"), label_size=18)
 ggsave(chl.plot, file="Mcap2021/Figures/Chlorophyll_panel.png", width=8, height=5)
 ```

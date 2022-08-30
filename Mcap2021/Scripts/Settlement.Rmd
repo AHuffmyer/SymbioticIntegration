@@ -62,8 +62,8 @@ Plot data as mean larval concentration over time.
 
 ```{r}
 settle_plot<-settle %>%
-    group_by(Date, Treatment)%>%
-    summarise(mean=mean(Settled), sd=sd(Settled), N=length(Settled), se=sd/sqrt(N))%>%
+    dplyr::group_by(Date, Treatment)%>%
+    dplyr::summarise(mean=mean(Settled), sd=sd(Settled), N=length(Settled), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Date), y = mean, group=interaction(Date, Treatment))) +
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Date)), pch = 21, size=6, position = position_dodge(0.2)) + 
@@ -72,10 +72,12 @@ settle_plot<-settle %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("% Settlement")))) +
+    geom_text(x=3, y=16, label="Treatment p=0.758", color="darkgray", size=8)+
+    geom_text(x=3, y=14, label="Date p<0.001", color="black", size=8)+
     ylim(0, 20)+
     theme_classic() + 
     theme(
-      legend.position="top",
+      legend.position="none",
       axis.title=element_text(face="bold", size=16),
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 

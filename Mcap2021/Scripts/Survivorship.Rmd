@@ -62,8 +62,8 @@ Plot data as mean larval concentration over time.
 
 ```{r}
 surv_plot<-survival %>%
-    group_by(Timepoint, Treatment)%>%
-    summarise(mean=mean(Larvae.per.mL), sd=sd(Larvae.per.mL), N=length(Larvae.per.mL), se=sd/sqrt(N))%>%
+    dplyr::group_by(Timepoint, Treatment)%>%
+    dplyr::summarise(mean=mean(Larvae.per.mL), sd=sd(Larvae.per.mL), N=length(Larvae.per.mL), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Timepoint), y = mean, group=interaction(Timepoint, Treatment))) +
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Timepoint)), pch = 21, size=6, position = position_dodge(0.2)) + 
@@ -72,10 +72,12 @@ surv_plot<-survival %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
+    geom_text(x=3, y=0.7, label="Treatment p=0.806", color="darkgray", size=8)+
+    geom_text(x=3, y=0.6, label="Date p<0.001", color="black", size=8)+
     ylim(0.5, 1.5)+
     theme_classic() + 
     theme(
-      legend.position="top",
+      legend.position="none",
       axis.title=element_text(face="bold", size=16),
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 
@@ -89,7 +91,7 @@ ggsave("Mcap2021/Figures/Survival.png", surv_plot, dpi=300, w=8.5, h=5, units="i
 
 Build linear mixed effect model and examine for survival.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-survmodel<-lmer(Larvae.per.mL~Treatment*Timepoint + (1|Tank), data=survival) #run as random
+survmodel<-lmer(Larvae.per.mL~Treatment*Timepoint + (1|Tank:Treatment), data=survival) #run as random
 anova(survmodel, type="II")
 summary(survmodel)
 ```
