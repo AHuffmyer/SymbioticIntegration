@@ -53,7 +53,7 @@ library(tidyverse)
 library(dplyr)
 ```
 
-# **Symbiont Density**    
+# **Load data and calculations**    
 
 Import and manipulate data  
 ```{r}
@@ -87,9 +87,11 @@ df <- df %>%
 
 This generated the total number of cells in each tube. 
 
+# **Normalize to protein**
+
 Now normalized to total protein.   
 
-First, calculate protein per uL from the "Holo" tube for each sample. 
+First, calculate protein per uL from the "Holobiont" tube for each sample. 
 
 ```{r}
 protein<-read.csv("Mcap2021/Output/Protein/protein_output.csv")
@@ -128,13 +130,13 @@ all%>%
   write_csv("Mcap2021/Output/Cells/cells_output.csv")
 ```
 
-### Plotting  
+# **Visualize data**   
 
 Plot cells per unit protein data with mean and standard error.   
 
 ```{r}
 all %>%
-  filter(!Sample.ID=="H")%>%
+  #filter(!Sample.ID=="H")%>%
   ggplot(aes(x = Treatment, y = cells.ugprotein, color = Treatment)) +
   labs(x = "",y = "Cell Density per ug protein") +
   scale_color_manual(values=c("blue", "red"))+
@@ -146,13 +148,12 @@ all %>%
   theme_classic()
 ```
 
-
 Present means and standard error of each group and save summary table.  
 
 ```{r}
 all%>%
   group_by(Treatment)%>%
-    filter(!Sample.ID=="H")%>%
+    #filter(!Sample.ID=="H")%>%
   summarise(n=length(cells.ugprotein),
             Mean=format(round(mean(cells.ugprotein), 0), 0), 
             SE=format(round(sd(cells.ugprotein)/sqrt(length(cells.ugprotein)),0),0))%>%
@@ -161,87 +162,12 @@ all%>%
   row_spec(0, bold = TRUE) 
 ```
 
-Plot data as a scatterplot with labels for each sample.    
-```{r}
-symb_plot<-all %>%
-    filter(!Sample.ID=="H")%>%
-    droplevels()%>%
-    ggplot(., aes(x = as.factor(Treatment), y = cells.ugprotein)) +
-    geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=4, position = position_jitterdodge(0.1)) + 
-    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
-    xlab("Treatment") + 
-   scale_fill_manual(values=c("blue", "red"))+
-    scale_color_manual(values=c("blue", "red"))+
-    ylab(expression(bold(paste("Symbiont cells ug protein"))))+
-    theme_classic() + 
-    theme(
-      legend.position="right",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14), 
-      legend.text=element_text(size=12)
-      ); symb_plot
-
-```
-
-Plot data as box plot  
-```{r}
-symb_plot2<-all %>%
-    filter(!Sample.ID=="H")%>%
-    ggplot(., aes(x = as.factor(Treatment), y = cells.ugprotein)) +
-    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
-    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
-    scale_fill_manual(values=c("blue", "red"))+
-  scale_color_manual(values=c("blue", "red"))+
-    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
-    xlab("Treatment") + 
-    ylab(expression(bold(paste("Symbiont cells ug protein"))))+
-    theme_classic() + 
-    theme(
-      legend.position="right",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14)
-      ); symb_plot2
-
-```
-
-Plot symbiont density with plot and error bars.   
-```{r}
-symb_plot2_b<-all %>%
-    filter(!Sample.ID=="H")%>%
-    dplyr::group_by(Treatment)%>%
-    dplyr::summarise(mean=mean(cells.ugprotein), se=sd(cells.ugprotein)/sqrt(length(cells.ugprotein)))%>%
-  
-  
-    ggplot(., aes(x = as.factor(Treatment), y = mean)) +
-    geom_point(aes(fill=Treatment), pch = 21, size=8) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
-    scale_fill_manual(values=c("blue", "red"))+
-    scale_color_manual(values=c("blue", "red"))+
-    xlab("Treatment") + 
-    ylim(200, 600)+
-    ylab(expression(bold(paste("Symbiodiniaceae cells (ug protein"^-1, ")"))))+
-    geom_text(x=1.5, y=250, label="p=0.267", color="darkgray", size=8)+
-    theme_classic() + 
-    theme(
-      legend.position="none",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14)
-      ); symb_plot2_b
-
-#Save plot
-ggsave(symb_plot2_b, file="Mcap2021/Figures/symbiont_density.png", w=4, h=5)
-```
-
-
-### Statistical analysis  
+# **Statistical analysis**  
 
 Run ANOVA on cells per protein treatment.    
 ```{r}
 sym_model_data<-all%>%
-      filter(!Sample.ID=="H")%>%
+      #filter(!Sample.ID=="H")%>%
       droplevels()
 
 sym_model<-aov(cells.ugprotein~Treatment, data=sym_model_data)
@@ -253,6 +179,36 @@ leveneTest(residuals(sym_model)~Treatment, data=sym_model_data)
 Both normality and homogeneity of variance pass.   
 
 No significant difference.  
+
+# **Plotting**  
+
+Plot data as box plot  
+```{r}
+symb_plot<-all %>%
+    #filter(!Sample.ID=="H")%>%
+    ggplot(., aes(x = as.factor(Treatment), y = cells.ugprotein)) +
+    geom_boxplot(aes(color=Treatment), outlier.shape = NA, lwd=1, width=0.5) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.4), alpha=0.4) + 
+    scale_fill_manual(values=c("blue", "red"))+
+    scale_color_manual(values=c("blue", "red"))+
+    xlab("") + 
+    ylab(expression(bold(paste("Symbiont density (cells ug protein"^-1, ")"))))+
+    geom_text(x=1.5, y=800, label="p=0.150", color="darkgray", size=4)+
+    theme_classic() + 
+    theme(axis.text = element_text(size=12, color="black"),
+          axis.title=element_text(size=12, color="black", face="bold"), 
+          legend.title=element_text(size=12, color="black", face="bold"), 
+          legend.text=element_text(size=12, color="black"), 
+          legend.position="none"
+          ); symb_plot
+
+ggsave("Mcap2021/Figures/symbiont_density.png", symb_plot, width=3, height=5)
+```
+
+
+
+
+
 
 
 
