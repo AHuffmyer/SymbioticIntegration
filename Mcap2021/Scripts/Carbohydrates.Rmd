@@ -1,7 +1,7 @@
 ---
 title: Carbohydrate analysis
 author: "AS Huffmyer"
-date: '2022'
+date: '2023'
 output:
   html_document:
     code_folding: hide
@@ -31,6 +31,7 @@ library(Rmisc)
 library(ggpubr)
 library(lsmeans)
 library(tidyverse)
+library(car)
 ```
 
 # **Load data**  
@@ -43,7 +44,8 @@ Meta <- read.csv("Mcap2021/Data/Carbohydrates/20220406_Carb_Meta.csv")
 volumes <- read.csv("Mcap2021/Data/Resuspension_volumes.csv")
 ```
 
-# **Run with only Initial Standard curve**  
+# **Standardize and calculate**  
+## **Run with only Initial Standard curve**  
 
 Merging Files and renaming columns
 
@@ -86,7 +88,7 @@ lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
 lmsummary <- summary(lmstandard) 
 ```
 
-# **Calculations (initial curve)**  
+## **Calculations (initial curve)**  
 
 Obtain concentration values for samples from standard curve.  
 
@@ -133,7 +135,7 @@ Carb.Plot.samples <- Samples%>%
   #  ylim(0,0.5) +
   #geom_text(position=position_jitterdodge(dodge.width=0.4))+
   xlab("Temperature") + ylab(expression("Total Carbohydrate " (mg))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #Makes background theme white
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, linewidth=0.75), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_blank()) +
   #  theme(axis.text = element_text(size = 30, color = "black"),
   #        axis.title = element_text(size = 36, color = "black")) +
@@ -169,9 +171,7 @@ model<-Samples%>%
 summary(model)
 ```
 
-Potential outliers are A, I (high values), and H (low values). H will be removed.  
-
-# **Run with all runs Standard curve**  
+## **Run with all runs Standard curve**  
 
 Merging Files and renaming columns
 
@@ -214,7 +214,7 @@ lmstandard.all <- lm (Concentration ~ abs.corr, data = Standard.all)
 lmsummary.all <- summary(lmstandard.all) 
 ```
 
-# **Calculations (using all curves combined)**  
+## **Calculations (using all curves combined)**  
 
 Obtain concentration values for samples from standard curve.  
 
@@ -258,9 +258,8 @@ Carb.Plot.all <- Samples.all%>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.all 
 ```
 
-Potential outliers are A, I (high values), and H (low values)
 
-# **Show plots side by side**  
+## **Show plots side by side**  
 
 ```{r}
 library(cowplot)
@@ -272,7 +271,7 @@ larvae.compare
 
 We get the same answer with very minor differences using the curves. So we will proceed with using the first curve (Initial Run) because it was more robust.  
 
-# **Calculate Ratio of host:holobiont**   
+# **Host:holobiont carbohydrate ratios**   
 
 Calculate the ratio of host:holobiont carbohydrates 
 
@@ -289,44 +288,7 @@ ratios<-Samples%>%
   
 ```
 
-Plot Host:Holobiont ratios  
-
-```{r}
-Ratio.Plot <- ratios%>%
-  ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-   scale_fill_manual(values=c("blue", "red"))+
-  xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrates")) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot 
-```
-
-Plot with points and error bars. 
-```{r}
-Ratio.Plot_b<-ratios %>%
-    dplyr::group_by(Treatment)%>%
-    dplyr::summarise(mean=mean(ratio), se=sd(ratio)/sqrt(length(ratio)))%>%
-  
-    ggplot(., aes(x = as.factor(Treatment), y = mean)) +
-    geom_point(aes(fill=Treatment), pch = 21, size=8) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
-    scale_fill_manual(values=c("blue", "red"))+
-    scale_color_manual(values=c("blue", "red"))+
-    xlab("Treatment") + 
-    ylim(0.05, 0.3)+
-    ylab(expression(bold(paste("Host:Holobiont Carbohydrates"))))+
-     geom_text(x=1.5, y=0.08, label="p=0.046", color="black", size=8)+
-    theme_classic() + 
-    theme(
-      legend.position="none",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14)
-      ); Ratio.Plot_b
-
-```
+## Statistical tests 
 
 Test for differences with an anova.  
 
@@ -335,7 +297,25 @@ model<-aov(ratio~Treatment, data=ratios)
 summary(model)
 ```
 
-There is a significant difference in Host:Holobiont ratios of carbohydrates at high temperature.  
+There is a slight but significant difference in Host:Holobiont ratios of carbohydrates at high temperature. There are more carbohydrates in the host fraction out of the total carbohydrates at high temperature. 
+
+## Plotting  
+
+Plot Host:Holobiont ratios  
+
+```{r}
+Ratio.Plot <- ratios%>%
+  ggplot(aes(x=Treatment, y=ratio)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0.48, label="p=0.046", color="black", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold("Host:Holobiont Carb."))) + #Axis titles
+  theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black")); Ratio.Plot 
+```
 
 # **Normalize to protein values**  
 
@@ -362,45 +342,9 @@ Samples_norm<-Samples_norm%>%
   mutate(Carb.normalized=Carb.ug/Protein.ug)
 ```
 
-Plot.  
+## Statistical tests  
 
-```{r}
-Carb.Plot.norm <- Samples_norm%>%
-  ggplot(aes(x=Treatment, y=Carb.normalized, fill = Fraction)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  xlab("Temperature") + ylab(expression("Total Carbohydrate " (ug/ug))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.norm 
-```
-
-Plot total host carbohydrates with points and error bars. 
-```{r}
-carb.host.prot<-Samples_norm %>%
-    filter(Fraction=="Host")%>%
-    dplyr::group_by(Treatment)%>%
-    dplyr::summarise(mean=mean(Carb.normalized), se=sd(Carb.normalized)/sqrt(length(Carb.normalized)))%>%
-  
-    ggplot(., aes(x = as.factor(Treatment), y = mean)) +
-    geom_point(aes(fill=Treatment), pch = 21, size=8) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
-    scale_fill_manual(values=c("blue", "red"))+
-    scale_color_manual(values=c("blue", "red"))+
-    xlab("Treatment") + 
-    ylim(3, 7)+
-    ylab(expression(bold(paste("Host Carbohydrates (ug ug protein"^-1, ")"))))+
-    geom_text(x=1.5, y=3.5, label="p=0.078", color="darkgray", size=8)+
-    theme_classic() + 
-    theme(
-      legend.position="none",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14)
-      ); carb.host.prot
-```
-
-Test for differences with an anova.  
+Test for differences with an anova for host carbohydrates.  
 
 ```{r}
 model_data<-Samples_norm%>%
@@ -409,43 +353,74 @@ model_data<-Samples_norm%>%
 model<-aov(Carb.normalized~Treatment, data=model_data)
 summary(model)
 ```
+There is no significant difference in host carbohydrates. 
 
-Calculate Host:Holobiont carbohydrate ratios.  
-
-```{r}
-ratios_norm<-Samples_norm%>%
-  ungroup()%>%
-  dplyr::select(Sample.ID, Treatment, Fraction, Carb.normalized)%>%
-  spread(Fraction, Carb.normalized)%>%
-  mutate(ratio=Host/Holobiont)
-```
-
-Plot ratios.  
+Test for differences with an anova for holobiont carbohydrates.  
 
 ```{r}
-Ratio.Plot.norm <- ratios_norm%>%
-  ggplot(aes(x=Treatment, y=ratio, fill=Treatment)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-   scale_fill_manual(values=c("blue", "red"))+
-  xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrates")) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Ratio.Plot.norm 
-```
+model_data<-Samples_norm%>%
+  filter(Fraction=="Holobiont")
 
-Test for differences with an anova.  
-
-```{r}
-model<-aov(ratio~Treatment, data=ratios_norm)
+model<-aov(Carb.normalized~Treatment, data=model_data)
 summary(model)
 ```
+There is no significant difference in host carbohydrates. 
 
-No significant differences in carbohydrate ratios between host and holobiont fractions once normalized to protein.    
+## Plotting  
+
+Plot host and holobiont fractions. 
+
+```{r}
+Carb.Plot.norm <- Samples_norm%>%
+  ggplot(aes(x=Treatment, y=Carb.normalized, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  xlab("Temperature") + ylab(expression("Total Carb. " (ug/ug))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.norm 
+```
+
+Plot host carbohydrates across temperatures.   
+
+```{r}
+carb.host.prot <- Samples_norm%>%
+  filter(Fraction=="Host")%>%
+  
+  ggplot(aes(x=Treatment, y=Carb.normalized)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=8, label="p=0.078", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black")); carb.host.prot 
+```
+
+Plot holobiont carbohydrates across temperatures.   
+
+```{r}
+carb.holobiont.prot <- Samples_norm%>%
+  filter(Fraction=="Holobiont")%>%
+  
+  ggplot(aes(x=Treatment, y=Carb.normalized)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=15, label="p=0.258", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black")); carb.holobiont.prot 
+```
+
 
 # **Normalize to cell density**  
 
-## Holobiont  
+## Holobiont    
 
 Read in cell density values.  
 ```{r}
@@ -473,20 +448,7 @@ cells_data_holo<-cells_data_holo%>%
   mutate(Carb.ug.cell=Carb.mg.cell*1000)
 ```
 
-Plot.  
-
-```{r}
-Carb.Plot.cells.holo <- cells_data_holo%>%
-  filter(!Sample.ID=="H")%>%
-  ggplot(aes(x=Treatment, y=Carb.ug.cell, fill = Treatment)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  scale_fill_manual(values=c("blue", "red"))+
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  xlab("Temperature") + ylab(expression("Holobiont Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.holo 
-```
+### Statistical tests  
 
 Test for differences with an anova.  
 
@@ -497,6 +459,29 @@ cells_data_model_holo<-cells_data_holo%>%
 model<-aov(Carb.ug.cell~Treatment, data=cells_data_model_holo)
 summary(model)
 ```
+
+There are less carbohydrates in the holobiont per symbiont cell. 
+
+### Plotting 
+
+Plot  
+
+```{r}
+Carb.Plot.cells.holo <- cells_data_holo%>%
+  filter(!Sample.ID=="H")%>%
+  
+  ggplot(aes(x=Treatment, y=Carb.ug.cell)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0.034, label="p=0.048", color="black", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug cell"^-1, ")")))) + #Axis titles
+  theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black")); Carb.Plot.cells.holo 
+```
+
 
 ## Host  
 
@@ -526,22 +511,7 @@ cells_data_host<-cells_data_host%>%
   mutate(Carb.ug.cell=Carb.mg.cell*1000)
 ```
 
-Plot.  
-
-```{r}
-Carb.Plot.cells.host <- cells_data_host%>%
-  filter(!Sample.ID=="H")%>%
-  filter(Carb.ug.cell<0.02)%>%
-  filter(Carb.ug.cell>0.003)%>%
-  ggplot(aes(x=Treatment, y=Carb.ug.cell, fill = Treatment)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  scale_fill_manual(values=c("blue", "red"))+
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  xlab("Temperature") + ylab(expression("Host Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), #
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.host 
-```
+### Statistical Tests  
 
 Test for differences with an anova.  
 
@@ -555,89 +525,47 @@ model<-aov(Carb.ug.cell~Treatment, data=cells_data_model_host)
 summary(model)
 ```
 
-Plot host carbohydrates normalized to cell counts 
+No significant difference in host carbohydrates per symbiont cell. 
 
-Plot symbiont density with plot and error bars.   
-```{r}
-Carb.Plot.cells.host_b<-cells_data_host %>%
-    filter(!Sample.ID=="H")%>%
-    dplyr::group_by(Treatment)%>%
-    dplyr::summarise(mean=mean(Carb.ug.cell), se=sd(Carb.ug.cell)/sqrt(length(Carb.ug.cell)))%>%
-  
-  
-    ggplot(., aes(x = as.factor(Treatment), y = mean)) +
-    geom_point(aes(fill=Treatment), pch = 21, size=8) +
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=Treatment), pch = 21, size=2, width=0) +
-    scale_fill_manual(values=c("blue", "red"))+
-    scale_color_manual(values=c("blue", "red"))+
-    xlab("Treatment") + 
-    ylim(0.002, 0.01)+
-    geom_text(x=1.5, y=0.003, label="p=0.769", color="darkgray", size=8)+
-    ylab(expression(bold(paste("Host Carbohdyrates (ug symbiont cell"^-1, ")"))))+
-    theme_classic() + 
-    theme(
-      legend.position="none",
-      axis.title=element_text(face="bold", size=14),
-      axis.text=element_text(size=12, color="black"), 
-      legend.title=element_text(face="bold", size=14)
-      ); Carb.Plot.cells.host_b
-```
+### Plotting  
 
-## Host:Holobiont Ratio normalized to cell counts  
-
-Make a data frame to calculate ratios.  
-```{r}
-head(cells_data_holo)
-head(cells_data_host)
-
-cells_data_holo<-cells_data_holo%>%
-  dplyr::select(Treatment, Fraction, Sample.ID, Carb.ug.cell)%>%
-  spread(Fraction, Carb.ug.cell)
-
-cells_data_host<-cells_data_host%>%
-  dplyr::select(Treatment, Fraction, Sample.ID, Carb.ug.cell)%>%
-  spread(Fraction, Carb.ug.cell)
-
-ratios_cells<-left_join(cells_data_holo, cells_data_host)
-
-head(ratios_cells)
-
-ratios_cells<-ratios_cells%>%
-  mutate(ratio=Holobiont/Host)
-```
-
-Plot.  
+Plot   
 
 ```{r}
-Carb.Plot.cells.ratio <- ratios_cells%>%
+Carb.Plot.cells.host <- cells_data_host%>%
   filter(!Sample.ID=="H")%>%
-  filter(!Sample.ID=="L")%>%
-  ggplot(aes(x=Treatment, y=ratio, fill = Treatment)) +
-  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
-  scale_fill_manual(values=c("blue", "red"))+
-  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
-  xlab("Temperature") + ylab(expression("Host:Holobiont Carbohydrate " (ug/cell))) + #Axis titles
-  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.cells.ratio 
+  
+  ggplot(aes(x=Treatment, y=Carb.ug.cell)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0.012, label="p=0.769", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug cell"^-1, ")")))) + #Axis titles
+  theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black")); Carb.Plot.cells.host 
 ```
 
-Test for differences with an anova.  
-
-```{r}
-ratios_cells_model<-ratios_cells%>%
-  filter(!Sample.ID=="H")%>%
-  filter(!Sample.ID=="L")
-
-model<-aov(ratio~Treatment, data=ratios_cells_model)
-summary(model)
-```
 
 # **Assemble figure panel**  
 
+Ratio.Plot
+carb.holobiont.prot
+carb.host.prot
+Carb.Plot.cells.holo
+Carb.Plot.cells.host
+
 Generate a figure with panel of carbohydrate metrics.  
 ```{r}
-carbs.plot<-plot_grid(carb.host.prot, Carb.Plot.cells.host_b, Ratio.Plot_b, nrow=1, ncol=3, label_y=1, labels=c("A", "B", "C"), label_size=18)
-ggsave(carbs.plot, file="Mcap2021/Figures/Carbs_panel.png", width=12, height=5)
+Ratio.Plot_panel<-Ratio.Plot+theme(axis.title.x=element_blank(), legend.title=element_text(face="bold", size=14), legend.text=element_text(size=14, color="black"))
+carb.holobiont.prot_panel<-carb.holobiont.prot+theme(legend.position="none", axis.title.x=element_blank())
+carb.host.prot_panel<-carb.host.prot+theme(legend.position="none", axis.title.x=element_blank())
+Carb.Plot.cells.holo_panel<-Carb.Plot.cells.holo+theme(legend.position="none", axis.title.x=element_blank())
+Carb.Plot.cells.host_panel<-Carb.Plot.cells.host+theme(legend.position="none", axis.title.x=element_blank())
+
+carbs.plot<-plot_grid(carb.holobiont.prot_panel, carb.host.prot_panel, Carb.Plot.cells.holo_panel, Carb.Plot.cells.host_panel, Ratio.Plot_panel, nrow=1, ncol=5, label_y=1, labels=c("A", "B", "C", "D", "E"), label_size=18, rel_widths = c(1,1,1,1,1.4))
+
+ggsave(carbs.plot, file="Mcap2021/Figures/Carbs_panel.png", width=15, height=5)
 ```
 
