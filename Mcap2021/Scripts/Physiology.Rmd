@@ -1,0 +1,1248 @@
+---
+title: Physiology analysis
+author: "AS Huffmyer"
+date: '2023'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+This script analyzes and plots data for Symbiotic Integration 2021 physiology measurements including protein, carbohydrates, cell counts, chlorophyll concentration, and correlations between these variables.
+
+# Set up 
+
+```{r}
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("readr")) install.packages("readr")
+if (!require("stringr")) install.packages("stringr")
+if (!require("gridExtra")) install.packages("gridExtra")
+if (!require("grid")) install.packages("grid")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("lattice")) install.packages("lattice")
+if (!require("Rmisc")) install.packages("Rmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("lsmeans")) install.packages("lsmeans")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("car")) install.packages("car")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("ggcorrplot")) install.packages("ggcorrplot")
+if (!require("corrr")) install.packages("corrr")
+if (!require("GGally")) install.packages("GGally")
+if (!require("cowplot")) install.packages("cowplot")
+
+library(dplyr)
+library(readr)
+library(stringr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(Rmisc)
+library(ggpubr)
+library(lsmeans)
+library(tidyverse)
+library(car)
+library(kableExtra)
+library(ggcorrplot)
+library(corrr)
+library(GGally)
+library(cowplot)
+```
+
+
+# Set plot theme 
+
+```{r}
+custom_theme<-theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        legend.text=element_text(size=12, color="black"), 
+        legend.title=element_text(size=12, face="bold", color="black"))
+```
+
+# Protein
+
+## Load data  
+
+Read in datafiles
+
+```{r}
+protein <- read.csv("Mcap2021/Data/Protein/20220407_Protein_data.csv")
+prot_meta <- read.csv("Mcap2021/Data/Protein/20220407_Protein_Meta.csv")
+volumes <- read.csv("Mcap2021/Data/Resuspension_volumes.csv")
+```
+
+## Prepare dataframes  
+
+Merging Files and renaming columns
+
+```{r}
+protein <- merge(prot_meta, protein, by = c("Well", "Run"))
+protein <- left_join(protein, volumes, by=c("Tube.ID"))
+
+# Blank correction for each run separately
+
+Blank <- protein %>% 
+  filter(Sample.Type == "Blank") %>%
+  summarise(blk.avg = mean(X562))
+
+protein$abs.corr <- protein$X562 - Blank$blk.avg
+```
+
+Plot regressions for each run.  
+
+```{r}
+protein %>% 
+  filter(Sample.Type == "Standard")%>%
+
+  ggplot(aes(x=Concentration, y=abs.corr))+
+  facet_wrap(~ Run)+
+  ylab("Absorbance (nm)")+ xlab("Protein (ug/mL)") + 
+  geom_point()+
+  ggtitle("Run")+
+  geom_smooth(method = "lm") +
+  stat_regline_equation(label.y = 1.0, aes(label = after_stat(eq.label))) +
+  custom_theme
+```
+
+Run a loop to extract regression for each run and calculate protein concentration.  
+
+```{r}
+run_list<-c("1", "2", "3")
+
+df_protein = data.frame()
+
+for (run in run_list) {
+
+  #subset data
+Standard <- protein %>% 
+  filter(Sample.Type == "Standard")%>%
+  filter(Run==run)
+  
+#generate standard curve equation
+lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
+lmsummary <- summary(lmstandard) 
+
+#select samples
+Samples <- protein %>% #subsetting Samples
+  filter(Sample.Type == "Sample")%>%
+  filter(Run==run)
+
+#calculate concentration
+Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to get concentration
+
+#add run column
+Samples$Run<-run
+
+#normalize to homogenate volume
+Samples$Protein.ug <- Samples$Concentration * (Samples$Resuspension_volume / 1000) * (25/Samples$Homo_vol)
+
+#join dataframes
+df <- data.frame(Samples)
+df_protein <- rbind(df_protein,df)
+
+} 
+
+```
+
+Plot results 
+
+```{r}
+Protein.Plot <- df_protein%>%
+  filter(!Treatment=="Astrangia")%>%
+  ggplot(aes(x=Treatment, y=Protein.ug, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  xlab("Temperature") + ylab(expression(bold("Total Carbohydrate " (ug)))) + #Axis titles
+  custom_theme; Protein.Plot
+
+```
+
+## Calculate Ratio of host:holobiont   
+
+Calculate the ratio of host:holobiont protein. 
+```{r}
+ratios<-df_protein%>%
+  filter(!Treatment=="Astrangia")%>%
+  dplyr::select(Sample.ID, Treatment, Fraction, Protein.ug)%>%
+  group_by(Sample.ID, Fraction, Treatment)%>%
+  dplyr::summarise(mean_protein=mean(Protein.ug))%>%
+  spread(Fraction, mean_protein)%>%
+  mutate(ratio=Host/Holobiont)
+  
+```
+
+Plot Host:Holobiont ratios  
+
+```{r}
+Ratio.Plot <- ratios%>%
+  ggplot(aes(x=Treatment, y=ratio, colour=Treatment)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+  scale_colour_manual(values=c("blue", "red"))+
+  scale_fill_manual(values=c("blue", "red"))+
+  xlab("Temperature") + 
+  ylab("Host:Holobiont Protein") + #Axis titles
+  custom_theme; Ratio.Plot 
+```
+
+Test for differences with an anova.  
+
+```{r}
+model<-aov(ratio~Treatment, data=ratios)
+summary(model)
+```
+
+No difference in host:holobiont protein ratios. Using protein data for normalization only. 
+
+## Output file to use for protein normalization  
+
+```{r}
+df_protein%>%
+  filter(!Treatment=="Astrangia")%>%
+  dplyr::select(Tube.ID, Sample.ID, Treatment, Fraction, Protein.ug)%>%
+  group_by(Tube.ID, Sample.ID, Treatment, Fraction)%>%
+  dplyr::summarise(Protein.ug=mean(Protein.ug))%>%
+  write_csv(., "Mcap2021/Output/Protein/protein_output.csv")
+```
+
+# Cell Density 
+
+## Load data 
+
+Import data  
+```{r}
+sym_counts <- read.csv("Mcap2021/Data/Cells/cell_counts.csv")
+```
+
+## Calculations 
+
+Calculate total cells.  
+```{r}
+# Calculate mean counts for each sample
+df_cells <- sym_counts %>%
+  dplyr::select(TubeID, Squares_counted, Sample.ID, matches("Count[1-6]")) %>%
+  gather("rep", "count", -TubeID, -Squares_counted, -Sample.ID) %>%
+  group_by(TubeID, Squares_counted, Sample.ID) %>%
+  dplyr::summarise(mean_count = mean(count, na.rm = TRUE))
+
+
+#Load in total volume of sample  
+volumes<-read.csv("Mcap2021/Data/Resuspension_volumes.csv")
+volumes<-dplyr::rename(volumes, TubeID=Tube.ID)
+
+df_cells<-left_join(df_cells, volumes)
+
+# Normalize counts by homogenate volume (ul)
+df_cells <- df_cells %>%
+  mutate(cells.mL = (mean_count * 10000) / Squares_counted,
+         cells = cells.mL * (Resuspension_volume/1000))
+        
+```
+
+This generated the total number of cells in each tube. 
+
+## Normalize to protein
+
+Now normalized to total protein.   
+
+First, calculate protein per uL from the "Holobiont" tube for each sample. 
+
+```{r}
+protein<-read.csv("Mcap2021/Output/Protein/protein_output.csv")
+
+protein<-protein%>%
+  dplyr::rename(TubeID=Tube.ID)
+
+protein<-left_join(protein, volumes)
+
+protein$protein.ug.uL<-protein$Protein.ug/protein$Resuspension_volume
+
+protein<-protein%>%
+  filter(Fraction=="Holobiont")
+```
+
+Second, divide the total number of cells by the resuspension volume to obtain cells per uL 
+
+```{r}
+df_cells$cells.uL=df_cells$cells/df_cells$Resuspension_volume
+```
+
+Third, normalize cells per uL / protein per uL to obtain cells per ug protein
+
+```{r}
+df_cells<-left_join(df_cells, protein, by="Sample.ID")
+
+df_cells$cells.ugprotein=df_cells$cells.uL/df_cells$protein.ug.uL
+```
+
+Output data frame.  
+
+```{r}
+df_cells%>%
+  dplyr::select(TubeID.x, Sample.ID, cells, cells.uL, cells.ugprotein, Resuspension_volume.x, Treatment)%>%
+  dplyr::rename(Tube.ID=TubeID.x, Resuspension_volume=Resuspension_volume.x)%>%
+  write_csv("Mcap2021/Output/Cells/cells_output.csv")
+```
+
+## Visualize data   
+
+Plot cells per unit protein data with mean and standard error.   
+
+```{r}
+df_cells %>%
+  ggplot(aes(x = Treatment, y = cells.ugprotein, color = Treatment)) +
+  labs(x = "",y = "Cell Density per ug protein") +
+  scale_color_manual(values=c("blue", "red"))+
+  geom_jitter(width = 0.05) +                                            # Plot all points
+  geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+  custom_theme
+```
+
+Present means and standard error of each group  in a table.  
+
+```{r}
+df_cells%>%
+  group_by(Treatment)%>%
+  dplyr::summarise(n=length(cells.ugprotein),
+            Mean=format(round(mean(cells.ugprotein), 0), 0), 
+            SE=format(round(sd(cells.ugprotein)/sqrt(length(cells.ugprotein)),0),0))%>%
+  kbl(caption="Descriptive statistics of Symbiodiniaceae cell densities")%>%
+  kable_classic(full_width=FALSE, html_font="Arial")%>%
+  row_spec(0, bold = TRUE) 
+```
+
+## Statistical analysis  
+
+Run ANOVA on cells per protein by treatment.    
+```{r}
+sym_model_data<-df_cells%>%
+      droplevels()
+
+sym_model<-aov(cells.ugprotein~Treatment, data=sym_model_data)
+summary(sym_model)
+qqPlot(residuals(sym_model))
+leveneTest(residuals(sym_model)~Treatment, data=sym_model_data)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference in cell density by treatment.    
+
+## Generate final plot  
+
+Plot data as box plot  
+```{r}
+sym_plot <- df_cells%>%
+  ggplot(aes(x=Treatment, y=cells.ugprotein)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+  ylim(0,850)+
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0, label="p=0.250", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Cells ug protein"^-1, ")"))))+
+  custom_theme; sym_plot 
+
+#ggsave("Mcap2021/Figures/symbiont_density.png", sym_plot, width=4, height=5)
+```
+
+# Chlorophyll 
+
+## Load data  
+
+Load data.  
+```{r}
+chl_metadata<-read_csv("Mcap2021/Data/Chlorophyll/platemap.csv")
+chl630<-read_csv("Mcap2021/Data/Chlorophyll/630_chl.csv")
+chl663<-read_csv("Mcap2021/Data/Chlorophyll/663_chl.csv")
+chl750<-read_csv("Mcap2021/Data/Chlorophyll/750_chl.csv")
+volumes<-read_csv("Mcap2021/Data/Resuspension_volumes.csv")
+```
+
+Modify column names and join together.  
+
+```{r}
+names(chl630)<-c("Well", "c630")
+names(chl663)<-c("Well", "c663")
+names(chl750)<-c("Well", "c750")
+
+head(chl630)
+head(chl663)
+head(chl750)
+
+df_chl<-left_join(left_join(chl630, chl663), chl750)
+
+df_chl<-left_join(df_chl, chl_metadata)
+```
+
+## Calculations 
+
+Calculate blank values and display mean blank.  
+
+```{r}
+Blank <- df_chl %>% 
+  filter(Sample.Type == "Blank") %>%
+  summarise(blk.avg = mean(c750))
+Blank
+```
+
+Subtract blanks from 630 and 663 values and account for path length correction.  
+```{r}
+# Subtracting 750 (blank) from 630 and 663 values, and accounting for path length (0.584 cm)
+df_chl$c630.corr <- (df_chl$c630 - Blank$blk.avg) / 0.584
+df_chl$c663.corr <- (df_chl$c663 - Blank$blk.avg) / 0.584
+head(df_chl)
+```
+
+Calculate chl a and chl c2.  
+```{r}
+# Chlorphyll A concentration equation 
+df_chl$chlA.ug.sample <- 11.43*df_chl$c663.corr - 0.64*df_chl$c630.corr
+
+# Chlorophyll C2 concentration equation 
+df_chl$chlC2.ug.sample <- 27.09*df_chl$c630.corr - 3.63*df_chl$c663.corr
+```
+
+Bring in volume data.  
+```{r}
+#Add a sample column to the volume data frame and select for only symbiont tubes
+volumes_sym<-volumes%>%
+  separate(Tube.ID, c("Sample.ID", "Fraction"))%>%
+  filter(Fraction=="Symb")%>%
+  dplyr::rename(Tube.ID=Sample.ID)
+  
+head(volumes_sym)
+
+df_chl<-left_join(df_chl, volumes_sym, by="Tube.ID")
+head(df_chl)
+```
+
+Multiply by resuspension volume to obtain chl concentrations in ug per uL. 
+
+```{r}
+df_chl$chlA.ug.uL<-df_chl$chlA.ug.sample*df_chl$Resuspension_volume
+
+df_chl$chlC2.ug.uL<-df_chl$chlC2.ug.sample*df_chl$Resuspension_volume
+```
+
+## Visualize sample replicates   
+
+Plot values for each sample to identify any discrepancies between replicates.  
+
+Chl A
+```{r}
+rep_plot_a<-df_chl %>%
+    filter(Sample.Type=="Sample")%>%
+    filter(!Treatment=="NA")%>%
+    droplevels()%>%
+    ggplot(., aes(x = Sample.ID, y = chlA.ug.uL)) +
+    geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=4, position = position_jitterdodge(0.1)) + 
+    xlab("Sample") + 
+    ylab(expression(bold(paste("Total Chl A ug uL"))))+
+    scale_color_manual(values=c("blue", "red"))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); rep_plot_a
+
+```
+
+Chl C2
+```{r}
+rep_plot_c<-df_chl %>%
+    filter(Sample.Type=="Sample")%>%
+    filter(!Treatment=="NA")%>%
+    droplevels()%>%
+    ggplot(., aes(x = Sample.ID, y = chlC2.ug.uL)) +
+    geom_point(aes(fill=Treatment, group=Treatment), pch = 21, size=4, position = position_jitterdodge(0.1)) + 
+    xlab("Sample") + 
+    ylab(expression(bold(paste("Total Chl C2 ug uL"))))+
+    scale_color_manual(values=c("blue", "red"))+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); rep_plot_c
+
+```
+
+Summarize by sample for ChlA and ChlC2.  
+```{r}
+df_chl<-df_chl%>%
+  filter(Sample.Type=="Sample")%>%
+  drop_na()%>%
+  group_by(Sample.ID, Tube.ID, Treatment, Fraction, Resuspension_volume)%>%
+  dplyr::summarise(mean_chlA.ug.ul=mean(chlA.ug.uL), mean_chlC2.ug.ul=mean(chlC2.ug.uL))%>%
+  mutate(total.chl.ug.uL=mean_chlA.ug.ul+mean_chlC2.ug.ul)
+```
+
+## Normalize to protein  
+
+First, calculate protein per uL from the "Holobiont" tube for each sample, from which we took the symbiont sample.   
+
+```{r}
+protein<-read.csv("Mcap2021/Output/Protein/protein_output.csv")
+
+protein<-protein%>%
+  dplyr::select(Sample.ID, Fraction, Protein.ug)%>%
+  dplyr::rename(Tube.ID=Sample.ID)
+
+volumes<-read_csv("Mcap2021/Data/Resuspension_volumes.csv")
+volumes<-volumes%>%
+  separate(Tube.ID, c("Tube.ID", "Fraction"))
+
+volumes$Fraction <- ifelse(volumes$Fraction == "Holo", "Holobiont", volumes$Fraction)  #rename holobiont
+
+protein<-left_join(protein, volumes)
+
+protein$protein.ug.uL<-protein$Protein.ug/protein$Resuspension_volume
+
+protein<-protein%>%
+  filter(Fraction=="Holobiont")
+```
+
+Next, divide chlA and chlC2 (ug.uL) by protein (ug.uL) for each sample.  
+
+```{r}
+df_chl$protein.ug.uL<-protein$protein.ug.uL[match(df_chl$Tube.ID, protein$Tube.ID)]
+```
+
+Normalize to total protein.  
+
+```{r}
+df_chl$chlA.ug.protein.ug<-df_chl$mean_chlA.ug.ul/df_chl$protein.ug.uL
+df_chl$chlC2.ug.protein.ug<-df_chl$mean_chlC2.ug.ul/df_chl$protein.ug.uL
+df_chl$total.chl.ug.protein.ug<-df_chl$total.chl.ug.uL/df_chl$protein.ug.uL
+```
+
+Remove H and S as an outlier (below 0 values). 
+```{r}
+df_chl<-df_chl%>%filter(!Sample.ID=="H")%>%filter(!Sample.ID=="S")
+```
+
+### Plot and Statistics: Chl a  
+
+View individual samples
+```{r}
+chlA_protein_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlA.ug.protein.ug)) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlA ug protein ug"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlA_protein_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chla_prot_model<-aov(chlA.ug.protein.ug~Treatment, data=df_chl)
+summary(chla_prot_model)
+qqPlot(residuals(chla_prot_model))
+leveneTest(residuals(chla_prot_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference in chl a between treatments.  
+
+### Plot and Statistics: Chl c2
+
+```{r}
+chlC2_protein_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlC2.ug.protein.ug)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlC2 ug protein ug"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlC2_protein_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chlc2_prot_model<-aov(chlC2.ug.protein.ug~Treatment, data=df_chl)
+summary(chlc2_prot_model)
+car::qqPlot(residuals(chlc2_prot_model))
+car::leveneTest(residuals(chlc2_prot_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference in chl c2 between treatments.  
+
+### Plot and Statistics: Total chl   
+
+```{r}
+chl.total_protein_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = total.chl.ug.protein.ug)) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("Total chl ug protein ug"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chl.total_protein_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chl.total_prot_model<-aov(total.chl.ug.protein.ug~Treatment, data=df_chl)
+summary(chl.total_prot_model)
+car::qqPlot(residuals(chl.total_prot_model))
+car::leveneTest(residuals(chl.total_prot_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference in total chlorophyll. 
+
+### Final plot for total chlorophyll per unit protein  
+
+Plot data as box plot  
+```{r}
+chl_prot_plot <- df_chl%>%
+  ggplot(aes(x=Treatment, y=total.chl.ug.protein.ug)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  ylim(0,210)+
+  geom_text(x=1.5, y=0, label="p=0.371", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (ug ug protein"^-1, ")"))))+
+  custom_theme; chl_prot_plot 
+
+#ggsave("Mcap2021/Figures/chl_protein.png", chl_prot_plot, width=4, height=5)
+```
+
+## Normalize to cell density  
+
+First, pull out cells per uL from the "Holobiont" tube for each sample, from which we took the symbiont sample.   
+
+```{r}
+cells<-read.csv("Mcap2021/Output/Cells/cells_output.csv")
+
+cells<-cells%>%
+  dplyr::select(Sample.ID, Treatment, cells.uL)%>%
+  dplyr::rename(Tube.ID=Sample.ID)
+
+```
+
+Next, divide chlA and chlC2 (ug.uL) by cells (uL) for each sample.  
+
+```{r}
+df_chl$cells.uL<-cells$cells.uL[match(df_chl$Tube.ID, cells$Tube.ID)]
+```
+
+Normalize to total protein.  
+
+```{r}
+df_chl$chlA.ug.cell<-df_chl$mean_chlA.ug.ul/df_chl$cells.uL
+df_chl$chlC2.ug.cell<-df_chl$mean_chlC2.ug.ul/df_chl$cells.uL
+df_chl$total.chl.ug.cell<-df_chl$total.chl.ug.uL/df_chl$cells.uL
+```
+
+### Plot results.  
+
+Chl A
+```{r}
+chlA_cell_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlA.ug.cell)) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlA ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlA_cell_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chla_cell_model<-aov(chlA.ug.cell~Treatment, data=df_chl)
+summary(chla_cell_model)
+car::qqPlot(residuals(chla_cell_model))
+car::leveneTest(residuals(chla_cell_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference.  
+
+Chl C2
+```{r}
+chlC2_cell_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = chlC2.ug.cell)) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("ChlC2 ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chlC2_cell_plot
+
+```
+
+Run ANOVA.    
+```{r}
+chlc2_cell_model<-aov(chlC2.ug.cell~Treatment, data=df_chl)
+summary(chlc2_cell_model)
+car::qqPlot(residuals(chlc2_cell_model))
+car::leveneTest(residuals(chlc2_cell_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference.  
+
+Total chlorophyll
+```{r}
+chl.total_cell_plot<-df_chl %>%
+    ggplot(., aes(x = as.factor(Treatment), y = total.chl.ug.cell)) +
+    geom_boxplot(aes(color=Treatment), outlier.size = 0, lwd=1) +
+    geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    scale_fill_manual(values=c("blue", "red"))+
+  scale_color_manual(values=c("blue", "red"))+
+    geom_text(aes(label=Sample.ID), vjust = -0.5, hjust=-0.1)+
+    xlab("Treatment") + 
+    ylab(expression(bold(paste("Total chl ug cell"))))+
+    theme_classic() + 
+    theme(
+      legend.position="right",
+      axis.title=element_text(face="bold", size=14),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14)
+      ); chl.total_cell_plot
+
+```
+
+### Generate final plot of total chlorophyll per cell  
+
+Run ANOVA.    
+```{r}
+chl.total_cell_model<-aov(total.chl.ug.cell~Treatment, data=df_chl)
+summary(chl.total_cell_model)
+car::qqPlot(residuals(chl.total_cell_model))
+car::leveneTest(residuals(chl.total_cell_model)~Treatment, data=df_chl)
+```
+
+Both normality and homogeneity of variance pass.   
+
+No significant difference in chlorophyll per cell between treatments.  
+
+Plot as box plot. 
+
+```{r}
+chl_cells_plot <- df_chl%>%
+  ggplot(aes(x=Treatment, y=total.chl.ug.cell)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  ylim(0,0.55)+
+  geom_text(x=1.5, y=0, label="p=0.712", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (ug cell"^-1, ")"))))+
+  custom_theme; chl_cells_plot 
+
+#ggsave("Mcap2021/Figures/chl_cells.png", chl_cells_plot, width=4, height=5)
+```
+
+# Carbohydrates 
+
+## Load data  
+
+Read in datafiles
+
+```{r}
+carbs_data <- read.csv("Mcap2021/Data/Carbohydrates/20220406_Carbohydrates_data.csv")
+carbs_meta <- read.csv("Mcap2021/Data/Carbohydrates/20220406_Carb_Meta.csv")
+volumes <- read.csv("Mcap2021/Data/Resuspension_volumes.csv")
+```
+
+## Standardize and calculate  
+
+Merging Files and renaming columns
+
+```{r}
+carbs_data <- merge(carbs_meta, carbs_data, by = c("Well", "Run"))
+carbs_data <- left_join(carbs_data, volumes, by=c("Tube.ID"))
+
+# Blank correction for each run separately
+
+Blank <- carbs_data %>% 
+  filter(Sample.Type == "Blank") %>%
+  filter(Run=="Initial")%>%
+  summarise(blk.avg = mean(X485))
+
+carbs_data$abs.corr <- carbs_data$X485 - Blank$blk.avg
+```
+
+Plot regressions for each run.  
+
+```{r}
+carbs_data %>% 
+  filter(Sample.Type == "Standard")%>%
+
+  ggplot(aes(x=Concentration, y=abs.corr))+
+  facet_wrap(~ Run)+
+  ylab("Absorbance (nm)")+ xlab("Carbohydrate (mg/mL)") + 
+  geom_point()+
+  ggtitle("Run")+
+  geom_smooth(method = "lm") +
+  stat_regline_equation(label.y = 1.0, aes(label = after_stat(eq.label))) +
+  custom_theme
+```
+
+The intial run was for test samples, we only use runs 1, 2, and 3 for data analysis. 
+
+Run a loop to extract regression for each run and calculate carbohydrate concentration.  
+
+```{r}
+run_list<-c("1", "2", "3")
+
+df_carbs = data.frame()
+
+for (run in run_list) {
+
+  #subset data
+Standard <- carbs_data %>% 
+  filter(Sample.Type == "Standard")%>%
+  filter(Run==run)
+  
+#generate standard curve equation
+lmstandard <- lm (Concentration ~ abs.corr, data = Standard)
+lmsummary <- summary(lmstandard) 
+
+#select samples
+Samples <- carbs_data %>% #subsetting Samples
+  filter(Sample.Type == "Sample")%>%
+  filter(Run==run)
+
+#calculate concentration
+Samples$Concentration <- predict(lmstandard, newdata = Samples) #using model to get concentration
+
+#add run column
+Samples$Run<-run
+
+#normalize to homogenate volume
+#Accounting for dilution factor (1000/100) and normalizing to homogenate volume 
+#Multiply sample concentration (mg/mL) by total slurry volume (mL) and dilution factor (1000/v of sample, usually 100 mL)
+
+Samples$Carb.mg <- (Samples$Concentration * (Samples$Resuspension_volume/1000) * (1000/Samples$Homo_vol))
+
+#join dataframes
+df <- data.frame(Samples)
+df_carbs <- rbind(df_carbs,df)
+
+} 
+
+```
+
+Carbohydrates are now in total mg carbohydrates in each sample.  
+
+Remove Astrangia samples. 
+```{r}
+df_carbs<-df_carbs%>%
+  filter(!Treatment=="Astrangia")
+```
+
+Plot results 
+
+```{r}
+Carbs.Plot <- df_carbs%>%
+  ggplot(aes(x=Treatment, y=Carb.mg, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  xlab("Temperature") + ylab(expression(bold("Total Carbohydrate " (mg)))) + #Axis titles
+  custom_theme; Carbs.Plot
+
+```
+
+## Host:holobiont carbohydrate ratios   
+
+Calculate the ratio of host:holobiont carbohydrates 
+
+Calculate the average host and average holobiont signal for each sample.  
+```{r}
+carb_ratio<-df_carbs%>%
+  dplyr::select(Sample.ID, Treatment, Fraction, Carb.mg)%>%
+  group_by(Sample.ID, Fraction, Treatment)%>%
+  dplyr::summarise(mean_carbs=mean(Carb.mg))%>%
+  spread(Fraction, mean_carbs)%>%
+  mutate(ratio=Host/Holobiont)%>%
+  filter(ratio>0)
+  
+```
+
+### Statistical tests 
+
+Test for differences with an anova.  
+
+```{r}
+model<-aov(ratio~Treatment, data=carb_ratio)
+summary(model)
+```
+
+There is a slight but non-significant difference in Host:Holobiont ratios of carbohydrates at high temperature. There are more carbohydrates in the host fraction out of the total carbohydrates at high temperature. 
+
+### Plotting  
+
+Plot Host:Holobiont ratios  
+
+```{r}
+carb_ratio_plot <- carb_ratio%>%
+  ggplot(aes(x=Treatment, y=ratio)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+  ylim(0,0.7)+
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0, label="p=0.108", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold("Host:Holobiont Carb."))) + #Axis titles
+  custom_theme; carb_ratio_plot 
+```
+
+## Normalize to protein values  
+
+Read in protein values (total protein per sample in ug).  
+```{r}
+protein<-read.csv("Mcap2021/Output/Protein/protein_output.csv")
+```
+
+Merge data frames.  
+```{r}
+df_carbs<-df_carbs%>%
+  dplyr::group_by(Tube.ID, Sample.ID, Treatment)%>%
+  dplyr::summarise(Carb.mg=mean(Carb.mg))
+
+df_carbs<-left_join(df_carbs, protein)
+```
+
+Convert carbs from mg to ug (multiply by 1000). Normalize carbs (ug) to protein (ug) to obtain carbs per unit protein.  
+```{r}
+df_carbs<-df_carbs%>%
+  mutate(Carb.ug=Carb.mg*1000)%>%
+  mutate(Carb.prot=Carb.ug/Protein.ug)
+```
+
+Remove outlier sample H and any value lower than 0. 
+```{r}
+df_carbs<-df_carbs%>%
+  filter(!Sample.ID=="H")%>%
+  filter(Carb.prot>0)
+```
+
+### Statistical tests  
+
+Test for differences with an anova for host carbohydrates.  
+
+```{r}
+model_data<-df_carbs%>%
+  filter(Fraction=="Host")
+
+model<-aov(Carb.prot~Treatment, data=model_data)
+summary(model)
+```
+There is no significant difference in host carbohydrates, but it is close! 
+
+Test for differences with an anova for holobiont carbohydrates.  
+
+```{r}
+model_data<-df_carbs%>%
+  filter(Fraction=="Holobiont")
+
+model<-aov(Carb.prot~Treatment, data=model_data)
+summary(model)
+```
+There is no significant difference in holobiont carbohydrates. 
+
+## Plotting  
+
+Plot host and holobiont fractions. 
+
+```{r}
+Carb.Plot.norm <- df_carbs%>%
+  ggplot(aes(x=Treatment, y=Carb.prot, fill = Fraction)) +
+  geom_boxplot(width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(pch = 21, position=position_jitterdodge(dodge.width=0.4)) +
+  xlab("Temperature") + ylab(expression(paste("Carbohydrates (ug ug protein"^-1, ")"))) + #Axis titles
+  theme_bw() + theme(panel.border = element_rect(color="black", fill=NA, size=0.75), panel.grid.major = element_blank(), 
+                     panel.grid.minor = element_blank(), axis.line = element_blank()) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)); Carb.Plot.norm 
+```
+
+Plot host carbohydrates across temperatures.   
+
+```{r}
+carb.host.prot <- df_carbs%>%
+  filter(Fraction=="Host")%>%
+  
+  ggplot(aes(x=Treatment, y=Carb.prot)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+  ylim(0,8)+
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0, label="p=0.099", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  custom_theme; carb.host.prot 
+```
+
+Plot holobiont carbohydrates across temperatures.   
+
+```{r}
+carb.holobiont.prot <- df_carbs%>%
+  filter(Fraction=="Holobiont")%>%
+  
+  ggplot(aes(x=Treatment, y=Carb.prot)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+  ylim(0,17)+
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  geom_text(x=1.5, y=0, label="p=0.217", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  custom_theme; carb.holobiont.prot 
+```
+
+
+
+
+
+
+## Normalize to cell density  
+
+### Load data and calculations    
+
+Read in cell density values.  
+```{r}
+cells<-read.csv("Mcap2021/Output/Cells/cells_output.csv")
+```
+
+Normalize carbs per protein to carbs per cell - add in cells, divide carbs.ug by cells 
+
+Divide carbs per protein by cells per protein 
+
+```{r}
+cells<-cells%>%select(Sample.ID, cells.ugprotein)
+
+df_carbs<-left_join(df_carbs, cells)
+
+df_carbs$carbs.cell<-df_carbs$Carb.prot/df_carbs$cells.ugprotein
+```
+
+Merge carb ratio data with carb concentration data. 
+```{r}
+ratio_df<-carb_ratio%>%select(Sample.ID, ratio)
+df_carbs<-left_join(df_carbs, ratio_df)
+```
+
+### Statistical tests  
+
+Test for differences in host carbs per cell with an anova.  
+
+```{r}
+cells_data_model<-df_carbs%>%
+  filter(!Sample.ID=="H")%>%
+  filter(Fraction=="Host")
+
+model<-aov(carbs.cell~Treatment, data=cells_data_model)
+summary(model)
+```
+
+There is no difference in host carbs per cell by treatment. 
+
+Test for differences in holobiont carbs per cell with an anova.  
+
+```{r}
+cells_data_model<-df_carbs%>%
+  filter(Fraction=="Holobiont")
+
+model<-aov(carbs.cell~Treatment, data=cells_data_model)
+summary(model)
+```
+
+There is a difference in carbs in the holobiont when normalized to cell density. 
+
+### Plotting 
+
+Plot carbs in host and holobiont fractions normalized to cell density.   
+
+```{r}
+carbs.cell.host <- df_carbs%>%
+  filter(Fraction=="Host")%>%
+  
+  ggplot(aes(x=Treatment, y=carbs.cell)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  ylim(0,0.03)+
+  geom_text(x=1.5, y=0, label="p=0.784", color="darkgray", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug cell"^-1, ")")))) + #Axis titles
+  custom_theme; carbs.cell.host 
+```
+
+```{r}
+carbs.cell.holo <- df_carbs%>%
+  filter(Fraction=="Holobiont")%>%
+  
+  ggplot(aes(x=Treatment, y=carbs.cell)) +
+  geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
+  geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
+   scale_fill_manual(values=c("blue", "red"))+
+  scale_colour_manual(values=c("blue", "red"))+
+  ylim(0,0.04)+
+  geom_text(x=1.5, y=0, label="p=0.046", color="black", size=4)+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug cell"^-1, ")")))) + #Axis titles
+  custom_theme; carbs.cell.holo 
+```
+
+
+
+# Correlations 
+
+## Merge files 
+
+Merge all files together to examine correlations. 
+```{r}
+#select relevant columns
+subset_cells<-df_cells%>%
+  select(Sample.ID, Treatment, cells.ugprotein)%>%
+  ungroup()%>%
+  select(!Squares_counted)
+
+subset_chl<-df_chl%>%
+  select(Sample.ID, Treatment, total.chl.ug.cell, total.chl.ug.protein.ug)%>%
+  ungroup()%>%
+  select(!Tube.ID)%>%
+  select(!Fraction)
+
+subset_carbs_host<-df_carbs%>%
+  ungroup()%>%
+  select(Sample.ID, Treatment, Fraction, Carb.prot, carbs.cell, ratio)%>%
+  filter(Fraction=="Host")%>%
+  dplyr::rename(Host.carb.ug.prot.ug=Carb.prot, Host.carbs.ug.cell=carbs.cell, ratio.host.holo.carbs=ratio)%>%
+  select(!Fraction)
+
+subset_carbs_holo<-df_carbs%>%
+  ungroup()%>%
+  select(Sample.ID, Treatment, Fraction, Carb.prot, carbs.cell)%>%
+  filter(Fraction=="Holobiont")%>%
+  dplyr::rename(Holo.carb.ug.prot.ug=Carb.prot, Holo.carbs.ug.cell=carbs.cell)%>%
+  select(!Fraction)
+
+master<-full_join(subset_cells, subset_chl)
+master<-full_join(master, subset_carbs_host)
+master<-full_join(master, subset_carbs_holo)
+
+head(master)
+```
+
+## Generate correlation matrix 
+
+Generating network plot with corrr package.  
+```{r}
+master%>%
+  corrr::correlate(., method="spearman", diagonal=1)%>% #generate correlation matrix
+  rearrange(.)%>%
+  #shave(.)%>% #remove upper triangle
+  network_plot(min_cor=.2)
+```
+
+Generating matrix with ggcorrplot for metrics in each treatment.    
+
+```{r}
+p<-master%>%
+  ggpairs(., columns=3:10, ggplot2::aes(colour=Treatment)) #try to bold significant stats
+
+#change colors
+for(i in 1:p$nrow) {
+  for(j in 1:p$ncol){
+    p[i,j] <- p[i,j] + 
+        scale_fill_manual(values=c("blue", "red")) +
+        scale_color_manual(values=c("blue", "red")) +
+        theme_classic()+
+        theme(text=element_text(size=14, face="bold"))+
+        theme(strip.text.x=element_text(face="bold", size=14))
+  }
+}
+
+p
+
+ggsave(plot=p, "Mcap2021/Figures/Physiology_Corr_Matrix.pdf", width=15, height=10, unit="in", dpi=300)
+```
+
+# Generate final figure 
+
+```{r}
+sym_plot2<-sym_plot+theme(legend.position="none", axis.title.x =element_blank())
+
+chl_prot_plot2<-chl_prot_plot+theme(legend.position="none", axis.title.x =element_blank())
+chl_cells_plot2<-chl_cells_plot+theme(legend.position="none", axis.title.x =element_blank())
+
+carb_ratio_plot2<-carb_ratio_plot+theme(legend.position="none", axis.title.x =element_blank())
+carb.holobiont.prot2<-carb.holobiont.prot+theme(legend.position="none", axis.title.x =element_blank())
+carb.host.prot2<-carb.host.prot+theme(legend.position="none", axis.title.x =element_blank())
+
+carbs.cell.holo2<-carbs.cell.holo+theme(legend.position="none", axis.title.x = element_blank())
+carbs.cell.host2<-carbs.cell.host+theme(legend.position="none", axis.title.x =element_blank())
+
+
+all_plots<-plot_grid(sym_plot2, chl_prot_plot2, chl_cells_plot2, carb_ratio_plot2, carb.holobiont.prot2, carb.host.prot2, carbs.cell.holo2, carbs.cell.host2, nrow=2, ncol=4, label_y=1, labels=c("A", "B", "C", "D", "E", "F", "G", "H"), label_size=18)
+
+ggsave(all_plots, file="Mcap2021/Figures/physiology_panel.png", width=12, height=10)
+```
+
