@@ -1,7 +1,7 @@
 ---
 title: Size analysis 
 author: "AS Huffmyer"
-date: '2022'
+date: '2023'
 output:
   html_document:
     code_folding: hide
@@ -15,7 +15,7 @@ editor_options:
 ---
 This script analyzes and plots data for Symbiotic Integration 2021 larval size 
 
-# **Setup**  
+# Setup  
 
 Load libraries. 
 
@@ -37,13 +37,13 @@ library(car)
 library(emmeans)
 ```
 
-# **Load data**  
+# Load data  
 
 ```{r}
 size<-read_csv("Mcap2021/Data/Size/larval_size.csv")
 ```
 
-# **Visualize**  
+# Visualize  
 
 Visualize by timepoint and treatment.  
 
@@ -136,9 +136,6 @@ size_plot_3b<-size %>%
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14)
       ); size_plot_3b
-
-#Save plot
-ggsave(size_plot_3b, file="Mcap2021/Figures/size.png", w=4, h=5)
 ```
 
 Group by tube at the end time point.  
@@ -165,7 +162,7 @@ size_plot_4<-size %>%
 
 ```
 
-# **Linear models**  
+# Linear models  
 
 Run anova model between time points.  
 ```{r}
@@ -187,3 +184,59 @@ summary(model2)
 
 qqPlot(residuals(model2))
 ```
+
+ 
+# Final plotting 
+
+Generate custom theme. 
+```{r}
+custom_theme<-theme_classic() + 
+  theme(axis.text = element_text(size=12, color="black"), 
+        axis.title=element_text(size=12, color="black", face="bold"), 
+        legend.text=element_text(size=12, color="black"), 
+        legend.title=element_text(size=12, face="bold", color="black"))
+```
+
+Make baseline a gray color instead of treatment color. 
+```{r}
+size<-size%>%
+  mutate(treatment=if_else(timepoint=="Baseline", "Baseline", treatment))
+```
+
+Calculate line positions. 
+```{r}
+
+```
+
+Plot. 
+```{r}
+#make segment locations 
+segpoints<-size%>%
+  group_by(treatment)%>%
+  dplyr::summarise(mean=mean(volume.mm3, na.rm=TRUE))%>%
+  spread(treatment, mean)
+  
+size_plot_full<-size %>%
+    ggplot(., aes(x = as.factor(timepoint), y = volume.mm3)) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.6), alpha=0.1) + 
+    #geom_line()+
+    scale_fill_manual(values=c("blue", "gray", "red"), name="Treatment")+
+    scale_color_manual(values=c("blue", "gray", "red"), name="Treatment")+
+    ylim(0,0.17)+
+    xlab("Timepoint") + 
+    ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
+    geom_text(x=1.5, y=0.0, label="p<0.001", color="black", size=5)+
+  
+  #baseline to ambient
+    geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = Ambient), colour="blue", data = segpoints, size=2, show.legend=FALSE) +
+ 
+    #baseline to high
+    geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = High), colour="red", data = segpoints, size=2, show.legend=FALSE) +
+    
+    custom_theme; size_plot_full
+
+#Save plot
+ggsave(size_plot_full, file="Mcap2021/Figures/size.png", w=4, h=5)
+```
+
+
