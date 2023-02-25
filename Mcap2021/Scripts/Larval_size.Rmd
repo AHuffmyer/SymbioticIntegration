@@ -166,7 +166,7 @@ size_plot_4<-size %>%
 
 Run anova model between time points.  
 ```{r}
-model1<-aov(volume.mm3~timepoint+treatment, data=size)
+model1<-aov(volume.mm3~timepoint*treatment, data=size)
 
 summary(model1)
 qqPlot(residuals(model1))
@@ -225,7 +225,8 @@ size_plot_full<-size %>%
     ylim(0,0.17)+
     xlab("Timepoint") + 
     ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
-    geom_text(x=1.5, y=0.0, label="p<0.001", color="black", size=5)+
+    geom_text(x=1.5, y=0.01, label="time p<0.001", color="black", size=4)+
+    geom_text(x=1.5, y=0.0, label="treatment p=0.001", color="black", size=4)+
   
   #baseline to ambient
     geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = Ambient), colour="blue", data = segpoints, size=2, show.legend=FALSE) +
@@ -233,10 +234,12 @@ size_plot_full<-size %>%
     #baseline to high
     geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = High), colour="red", data = segpoints, size=2, show.legend=FALSE) +
     
-    custom_theme; size_plot_full
+    custom_theme+
+  theme(axis.title.x=element_blank(), 
+        legend.position="none"); size_plot_full
 
 #Save plot
-ggsave(size_plot_full, file="Mcap2021/Figures/size.png", w=4, h=5)
+ggsave(size_plot_full, file="Mcap2021/Figures/size.png", w=3, h=5)
 ```
 
 
