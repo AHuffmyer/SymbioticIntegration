@@ -1,7 +1,7 @@
 ---
 title: Respirometry Plotting and Analysis  
 author: "AS Huffmyer"
-date: '2021'
+date: '2023'
 output:
   html_document:
     code_folding: hide
@@ -105,7 +105,7 @@ r_plot<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     dplyr::summarise(mean=mean(abs(R.nmol.org.min)), sd=sd(abs(R.nmol.org.min)), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = abs(mean), group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
@@ -136,7 +136,7 @@ Plot data as a box plot
 r_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = R.nmol.org.min, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_boxplot(aes(color=Treatment, group=interaction(Treatment, Temperature)), outlier.size = 0, position = position_dodge(0.85), lwd=1) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, position = position_jitterdodge(0.3)) + 
     xlab("Temperature") + 
@@ -164,7 +164,7 @@ p_plot<-PRdata %>%
     dplyr::group_by(Treatment, Temperature)%>%
     dplyr::summarise(mean=mean(P.nmol.org.min), sd=sd(P.nmol.org.min), N=length(P.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
@@ -193,7 +193,7 @@ Plot data as a box plot
 p_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = P.nmol.org.min, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_boxplot(aes(color=Treatment, group=interaction(Treatment, Temperature)), outlier.size = 0, position = position_dodge(0.85), lwd=1) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, position = position_jitterdodge(0.3)) + 
     xlab("Temperature") + 
@@ -221,7 +221,7 @@ gp_plot<-PRdata %>%
     dplyr::group_by(Treatment, Temperature)%>%
     dplyr::summarise(mean=mean(GP.nmol.org.min), sd=sd(GP.nmol.org.min), N=length(GP.nmol.org.min), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
@@ -250,7 +250,7 @@ Plot data as a box plot
 gp_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = GP.nmol.org.min, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_boxplot(aes(color=Treatment, group=interaction(Treatment, Temperature)), outlier.size = 0, position = position_dodge(0.85), lwd=1) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, position = position_jitterdodge(0.3)) + 
     xlab("Temperature") + 
@@ -278,7 +278,7 @@ pr_plot<-PRdata %>%
     dplyr::group_by(Treatment, Temperature)%>%
     dplyr::summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
@@ -308,7 +308,7 @@ Plot data as a box plot
 pr_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = ratio, group=interaction(Treatment, Temperature))) +
-    geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
+    #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_boxplot(aes(color=Treatment, group=interaction(Treatment, Temperature)), outlier.size = 0, position = position_dodge(0.85), lwd=1) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, position = position_jitterdodge(0.3)) + 
     xlab("Temperature") + 
