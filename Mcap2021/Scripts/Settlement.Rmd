@@ -116,7 +116,6 @@ settle_plot2<-settle %>%
 ggsave("Mcap2021/Figures/Settlement.png", settle_plot2, dpi=300, w=5, h=5, units="in")
 ```
 
-
 # **Analysis**  
 
 Build linear mixed effect model and examine for settlement.        
