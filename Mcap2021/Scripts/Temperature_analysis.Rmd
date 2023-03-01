@@ -56,10 +56,11 @@ temp_plot<-ggplot(temps)+
       axis.title=element_text(face="bold", size=16),
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14), 
-      legend.text=element_text(size=12)
+      legend.text=element_text(size=12), 
+      plot.margin = margin(1,1,1,1, unit="cm")
       ); temp_plot
 
-ggsave(filename="Mcap2021/Figures/Temperatures.png", plot=temp_plot, dpi=500, width=8.5, height=5, units="in")
+ggsave(filename="Mcap2021/Figures/Temperatures.png", plot=temp_plot, dpi=300, width=9, height=5, units="in")
 ```
 
 Display mean temperatures during embryo rearing period. 
