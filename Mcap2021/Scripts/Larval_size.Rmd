@@ -97,19 +97,25 @@ size_plot_3a<-size %>%
     filter(timepoint=="Sampling")%>%
   
     ggplot(., aes(x = as.factor(treatment), y = volume.mm3)) +
-    geom_boxplot(aes(color=treatment), outlier.size = 0, lwd=1) +
-    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2)) + 
+    geom_boxplot(aes(color=treatment), outlier.shape=NA, lwd=0.5) +
+    geom_point(aes(fill=treatment), pch = 21, size=4, position = position_jitterdodge(0.2), alpha=0.2) + 
     scale_fill_manual(values=c("blue", "red"))+
     scale_color_manual(values=c("blue", "red"))+
-    xlab("Treatment") + 
+    xlab("") + 
     ylab(expression(bold(paste("Larval Volume (mm"^3, ")"))))+
+    geom_text(x=1.5, y=0.0, label="p<0.001", color="black", size=5)+
     theme_classic() + 
+    ylim(0,0.18)+
     theme(
-      legend.position="right",
+      legend.position="none",
       axis.title=element_text(face="bold", size=14),
       axis.text=element_text(size=12, color="black"), 
       legend.title=element_text(face="bold", size=14)
       ); size_plot_3a
+
+
+#Save plot
+ggsave(size_plot_3a, file="Mcap2021/Figures/size_final.png", w=3, h=5)
 ```
 
 Plot with points and std. error bars.  
@@ -203,11 +209,6 @@ size<-size%>%
   mutate(treatment=if_else(timepoint=="Baseline", "Baseline", treatment))
 ```
 
-Calculate line positions. 
-```{r}
-
-```
-
 Plot. 
 ```{r}
 #make segment locations 
@@ -239,7 +240,7 @@ size_plot_full<-size %>%
         legend.position="none"); size_plot_full
 
 #Save plot
-ggsave(size_plot_full, file="Mcap2021/Figures/size.png", w=3, h=5)
+ggsave(size_plot_full, file="Mcap2021/Figures/size_time.png", w=3, h=5)
 ```
 
 

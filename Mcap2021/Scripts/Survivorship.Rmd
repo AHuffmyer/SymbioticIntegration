@@ -1,7 +1,7 @@
 ---
-title: Larval respirometry survival analysis and plotting
+title: Larval survival analysis and plotting
 author: "AS Huffmyer"
-date: '2021'
+date: '2023'
 output:
   html_document:
     code_folding: hide
@@ -62,13 +62,13 @@ Plot data as mean larval concentration over time.
 
 ```{r}
 surv_plot<-survival %>%
-    dplyr::group_by(Timepoint, Treatment)%>%
+    dplyr::group_by(HoursExposure, Treatment)%>%
     dplyr::summarise(mean=mean(Larvae.per.mL), sd=sd(Larvae.per.mL), N=length(Larvae.per.mL), se=sd/sqrt(N))%>%
-    ggplot(., aes(x = as.factor(Timepoint), y = mean, group=interaction(Timepoint, Treatment))) +
+    ggplot(., aes(x = as.factor(HoursExposure), y = mean, group=interaction(HoursExposure, Treatment))) +
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
-    geom_point(aes(fill=Treatment, group=interaction(Treatment, Timepoint)), pch = 21, size=6, position = position_dodge(0.2)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Timepoint)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
-    xlab("Timepoint") + 
+    geom_point(aes(fill=Treatment, group=interaction(Treatment, HoursExposure)), pch = 21, size=6, position = position_dodge(0.2)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, HoursExposure)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
+    xlab("Hours Exposure") + 
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
@@ -86,6 +86,35 @@ surv_plot<-survival %>%
 
 ggsave("Mcap2021/Figures/Survival.png", surv_plot, dpi=300, w=8.5, h=5, units="in")
 ```
+
+Plot with individual data points and mean line overlayed on top. 
+```{r}
+surv_plot2<-survival %>%
+    
+    ggplot(., aes(x = as.factor(HoursExposure), y = Larvae.per.mL, group=interaction(HoursExposure, Treatment))) +
+    #geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
+    geom_point(aes(fill=Treatment, group=interaction(Treatment, HoursExposure)), pch = 21, size=4, position = position_jitterdodge(0.2), alpha=0.2) + 
+    geom_smooth(aes(group=Treatment, color=Treatment), stat="smooth")+
+    xlab("Hours Exposure") + 
+    scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
+    scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
+    ylab(expression(bold(paste("Larvae mL" ^-1)))) +
+    geom_text(x=3.5, y=0.0, label="Treatment p=0.806", color="darkgray", size=5)+
+    geom_text(x=3.5, y=0.1, label="Date p<0.001", color="black", size=5)+
+    ylim(0, 2.2)+
+    theme_classic() + 
+    theme(
+      legend.position="none",
+      axis.title=element_text(face="bold", size=16),
+      axis.text=element_text(size=12, color="black"), 
+      legend.title=element_text(face="bold", size=14), 
+      legend.text=element_text(size=12)
+      ); surv_plot2
+
+ggsave("Mcap2021/Figures/Survival.png", surv_plot2, dpi=300, w=5, h=5, units="in")
+```
+
+
 
 # **Analysis**  
 
