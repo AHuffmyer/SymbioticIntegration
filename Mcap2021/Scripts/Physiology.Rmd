@@ -933,6 +933,10 @@ Test for differences with an anova.
 ```{r}
 model<-aov(ratio~Treatment, data=carb_ratio)
 summary(model)
+
+wilcox.test(ratio~Treatment, data=carb_ratio)
+kruskal.test(ratio~Treatment, data=carb_ratio)
+t.test(ratio~Treatment, data=carb_ratio)
 ```
 
 There is a slight but non-significant difference in Host:Holobiont ratios of carbohydrates at high temperature. There are more carbohydrates in the host fraction out of the total carbohydrates at high temperature. 
@@ -994,6 +998,10 @@ model_data<-df_carbs%>%
 
 model<-aov(Carb.prot~Treatment, data=model_data)
 summary(model)
+
+wilcox.test(Carb.prot~Treatment, data=model_data)
+kruskal.test(Carb.prot~Treatment, data=model_data)
+t.test(Carb.prot~Treatment, data=model_data)
 ```
 There is no significant difference in host carbohydrates, but it is close! 
 
@@ -1005,6 +1013,10 @@ model_data<-df_carbs%>%
 
 model<-aov(Carb.prot~Treatment, data=model_data)
 summary(model)
+
+wilcox.test(Carb.prot~Treatment, data=model_data)
+kruskal.test(Carb.prot~Treatment, data=model_data)
+t.test(Carb.prot~Treatment, data=model_data)
 ```
 There is no significant difference in holobiont carbohydrates. 
 
@@ -1058,10 +1070,6 @@ carb.holobiont.prot <- df_carbs%>%
 ```
 
 
-
-
-
-
 ## Normalize to cell density  
 
 ### Load data and calculations    
@@ -1100,6 +1108,10 @@ cells_data_model<-df_carbs%>%
 
 model<-aov(carbs.cell~Treatment, data=cells_data_model)
 summary(model)
+
+wilcox.test(carbs.cell~Treatment, data=cells_data_model)
+kruskal.test(carbs.cell~Treatment, data=cells_data_model)
+t.test(carbs.cell~Treatment, data=cells_data_model)
 ```
 
 There is no difference in host carbs per cell by treatment. 
@@ -1112,6 +1124,10 @@ cells_data_model<-df_carbs%>%
 
 model<-aov(carbs.cell~Treatment, data=cells_data_model)
 summary(model)
+
+wilcox.test(carbs.cell~Treatment, data=cells_data_model)
+kruskal.test(carbs.cell~Treatment, data=cells_data_model)
+t.test(carbs.cell~Treatment, data=cells_data_model)
 ```
 
 There is a difference in carbs in the holobiont when normalized to cell density. 
