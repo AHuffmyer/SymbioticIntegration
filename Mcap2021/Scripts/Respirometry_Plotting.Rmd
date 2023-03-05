@@ -356,24 +356,17 @@ summary(Rmodel1)
 
 Run only as regular ANOVA.  
 ```{r}
-summary(aov(R.nmol.org.min~Treatment*Temperature, data=PRdata))
+Rmodel2<-aov(R.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(Rmodel2)
 ```
 Same results.  
 
 Check assumptions of model for residual normality and variance. Passes assumptions.    
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Rmodel1))
-leveneTest(residuals(Rmodel1)~Treatment*Temperature, data=PRdata)
+qqPlot(residuals(Rmodel2))
+leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
 ```
-
-Conduct post hoc test.  
-
-```{r}
-emm<-emmeans(Rmodel1, ~Treatment*Temperature)
-cld(emm)
-```
-
 
 ## Net Photosynthesis   
 
@@ -386,24 +379,17 @@ summary(Pmodel1)
 
 Run only as regular ANOVA.  
 ```{r}
-summary(aov(P.nmol.org.min~Treatment*Temperature, data=PRdata))
+Pmodel2<-aov(P.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(Pmodel2)
 ```
 In this analysis, treatment is significant.  
 
-Check assumptions of model for residual normality and variance. Violates variance assumption, return to this.    
+Check assumptions of model for residual normality and variance.  
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Pmodel1))
-leveneTest(residuals(Pmodel1)~Treatment*Temperature, data=PRdata)
+qqPlot(residuals(Pmodel2))
+leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
 ```
-
-Conduct post hoc test.  
-
-```{r}
-emm<-emmeans(Pmodel1, ~Treatment*Temperature)
-cld(emm)
-```
- 
 
 ## Gross Photosynthesis  
 
@@ -416,22 +402,16 @@ summary(GPmodel1)
 
 Run only as regular ANOVA.  
 ```{r}
-summary(aov(GP.nmol.org.min~Treatment*Temperature, data=PRdata))
+GPmodel2<-aov(GP.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(GPmodel2)
 ```
 Same results.    
 
 Check assumptions of model for residual normality and variance. Passes.    
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(GPmodel1))
-leveneTest(residuals(GPmodel1)~Treatment*Temperature, data=PRdata)
-```
-
-Conduct post hoc test.  
-
-```{r}
-emm<-emmeans(GPmodel1, ~Treatment*Temperature)
-cld(emm)
+qqPlot(residuals(GPmodel2))
+leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
 ```
 
 ## P:R    
@@ -445,22 +425,16 @@ summary(PRmodel1)
 
 Run only as regular ANOVA.  
 ```{r}
-summary(aov(ratio~Treatment*Temperature, data=PRdata))
+PRmodel2<-aov(ratio~Treatment*Temperature, data=PRdata)
+summary(PRmodel2)
 ```
 Same results.   
 
 Check assumptions of model for residual normality and variance. Meets assumptions.  
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(PRmodel1))
-leveneTest(residuals(PRmodel1)~Treatment*Temperature, data=PRdata)
-```
-
-Conduct post hoc test.  
-
-```{r}
-emm<-emmeans(PRmodel1, ~Treatment*Temperature)
-cld(emm)
+qqPlot(residuals(PRmodel2))
+leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
 ```
 
 ### Generate summary tables of mean and SE for all variables  
