@@ -98,6 +98,7 @@ surv_plot2<-survival %>%
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
     geom_text(x=3.5, y=2, label="Treatment p=0.677", color="darkgray", size=5)+
     geom_text(x=3.5, y=2.1, label="Time p=0.002", color="black", size=5)+
+    geom_text(x=3.5, y=1.9, label="Interaction p=0.986", color="darkgray", size=5)+
     ylim(0, 2.2)+
     theme_classic() + 
     theme(
