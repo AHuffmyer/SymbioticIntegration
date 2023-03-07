@@ -73,8 +73,8 @@ settle_plot<-settle %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("% Settlement")))) +
-    geom_text(x=3, y=16, label="Treatment p=0.758", color="darkgray", size=8)+
-    geom_text(x=3, y=14, label="Time p<0.001", color="black", size=8)+
+    #geom_text(x=3, y=16, label="Treatment p=0.758", color="darkgray", size=8)+
+    #geom_text(x=3, y=14, label="Time p<0.001", color="black", size=8)+
     ylim(0, 20)+
     theme_classic() + 
     theme(
@@ -120,7 +120,7 @@ ggsave("Mcap2021/Figures/Settlement.png", settle_plot2, dpi=300, w=5, h=5, units
 
 Build linear mixed effect model and examine for settlement.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-settlemodel<-lmer(Settled~Treatment*Date + (1|Tank), data=settle) #run as random
+settlemodel<-lmer(Settled~Treatment*Date + (1|Tank:Treatment:Date), data=settle) #run as random
 anova(settlemodel, type="II")
 summary(settlemodel)
 ```
