@@ -44,3 +44,7 @@ vignettes/*.pdf
 #p and r output files
 Output/Respiration/RespirationPlots/*.pdf
 Output/Respiration/PhotosynthesisPlots/*.pdf
+
+#knit files
+*.html
+
