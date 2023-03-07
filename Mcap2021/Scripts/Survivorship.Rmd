@@ -72,9 +72,9 @@ surv_plot<-survival %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
-    geom_text(x=3, y=0.7, label="Treatment p=0.806", color="darkgray", size=8)+
-    geom_text(x=3, y=0.6, label="Date p<0.001", color="black", size=8)+
-    ylim(0.5, 1.5)+
+    #geom_text(x=3, y=2, label="Treatment p=0.806", color="darkgray", size=8)+
+    #geom_text(x=3, y=2.1, label="Time p<0.001", color="black", size=8)+
+    ylim(0.5, 2.1)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -83,8 +83,6 @@ surv_plot<-survival %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); surv_plot
-
-ggsave("Mcap2021/Figures/Survival.png", surv_plot, dpi=300, w=8.5, h=5, units="in")
 ```
 
 Plot with individual data points and mean line overlayed on top. 
@@ -98,8 +96,8 @@ surv_plot2<-survival %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
-    geom_text(x=3.5, y=0.0, label="Treatment p=0.806", color="darkgray", size=5)+
-    geom_text(x=3.5, y=0.1, label="Date p<0.001", color="black", size=5)+
+    geom_text(x=3.5, y=2, label="Treatment p=0.677", color="darkgray", size=5)+
+    geom_text(x=3.5, y=2.1, label="Time p=0.002", color="black", size=5)+
     ylim(0, 2.2)+
     theme_classic() + 
     theme(
@@ -119,7 +117,7 @@ ggsave("Mcap2021/Figures/Survival.png", surv_plot2, dpi=300, w=5, h=5, units="in
 
 Build linear mixed effect model and examine for survival.        
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-survmodel<-lmer(Larvae.per.mL~Treatment*Timepoint + (1|Tank:Treatment), data=survival) #run as random
+survmodel<-lmer(Larvae.per.mL~Treatment*Timepoint + (1|Tank:Treatment:Timepoint), data=survival) #run as random
 anova(survmodel, type="II")
 summary(survmodel)
 ```
