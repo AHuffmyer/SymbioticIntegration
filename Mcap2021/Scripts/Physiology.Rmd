@@ -348,7 +348,7 @@ sym_plot <- df_cells%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   geom_text(x=1.5, y=0, label="p=0.250", color="darkgray", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Cells ug protein"^-1, ")"))))+
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Cell Density (cells ug protein"^-1, ")"))))+
   custom_theme; sym_plot 
 
 #ggsave("Mcap2021/Figures/symbiont_density.png", sym_plot, width=4, height=5)
@@ -954,7 +954,7 @@ carb_ratio_plot <- carb_ratio%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   geom_text(x=1.5, y=0, label="p=0.108", color="darkgray", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold("Host:Holobiont Carb."))) + #Axis titles
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold("Host:Holobiont Carbohydrates"))) + #Axis titles
   custom_theme; carb_ratio_plot 
 ```
 
@@ -1048,7 +1048,7 @@ carb.host.prot <- df_carbs%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   geom_text(x=1.5, y=0, label="p=0.099", color="darkgray", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (ug ug protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.host.prot 
 ```
 
@@ -1065,7 +1065,7 @@ carb.holobiont.prot <- df_carbs%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   geom_text(x=1.5, y=0, label="p=0.217", color="darkgray", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug ug protein"^-1, ")"))))+ #Axis titles
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carbohydrates (ug ug protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.holobiont.prot 
 ```
 
@@ -1147,7 +1147,7 @@ carbs.cell.host <- df_carbs%>%
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.03)+
   geom_text(x=1.5, y=0, label="p=0.784", color="darkgray", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carb. (ug cell"^-1, ")")))) + #Axis titles
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (ug cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.host 
 ```
 
@@ -1162,7 +1162,7 @@ carbs.cell.holo <- df_carbs%>%
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.04)+
   geom_text(x=1.5, y=0, label="p=0.046", color="black", size=4)+
-  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carb. (ug cell"^-1, ")")))) + #Axis titles
+  xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carbohydrates (ug cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.holo 
 ```
 
