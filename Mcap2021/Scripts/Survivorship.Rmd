@@ -136,3 +136,14 @@ Conduct post hoc test.
 emm<-emmeans(survmodel, ~Treatment|Timepoint)
 cld(emm)
 ```
+
+
+Show summary of percent change in survival from start to end.  
+
+```{r}
+survival%>%
+  group_by(Timepoint)%>%
+  summarize(mean=mean(Larvae.per.mL, na.rm=TRUE))%>%
+  summarize(perc_change=(first(mean)-last(mean))/first(mean))
+```
+

@@ -139,3 +139,12 @@ Conduct post hoc test.
 emm<-emmeans(settlemodel, ~Treatment|Date)
 cld(emm)
 ```
+
+Show summary of percent change in survival from start to end.  
+
+```{r}
+settle%>%
+  group_by(Date)%>%
+  summarize(mean=mean(Settled, na.rm=TRUE))%>%
+  summarize(perc_change=(first(mean)-last(mean))/first(mean))
+```
