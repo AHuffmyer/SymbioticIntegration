@@ -463,8 +463,21 @@ C13_vip_diff_plot
 ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.jpg", C13_vip_diff_plot, width=11, height=6)
 ```
 
+I submitted the VIP list to metaboanalyst to conduct KEGG/class enrichment. These were the significantly enriched pathways in this VIP list: 
 
+KEGG Pathways: 
+- Aminoacyl-tRNA biosynthesis (FDR p<0.001)
+- Arginine biosynthesis (FDR p<0.001)
+- Alanine, aspartate, and glutamate metabolism (FDR p<0.001)
+- Valine, leucine, and isoleucine biosynthesis (FDR p=0.004)
+- Nicotinate and nicotinamide metabolism (FDR p=0.026)
 
+Class Enrichment: 
+- Amino acids and peptides (FDR p<0.001)
+- Monosaccharides (FDR p<0.001)
+- Cholines (FDR p=0.033)
+- Sulfonic acids (FDR p=0.033)
+- Short-chain acids and derivatives (FDR p=0.047)
 
 
 ## Generate PLS-DA for treatment: C12 samples     
@@ -620,4 +633,21 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C12.jpg", C12_vip_diff_plot
 
 There is some variation in metabolite differences between C12 and C13. We will discuss how we want to use these data. 
 
+I submitted the VIP list to metaboanalyst to conduct KEGG/class enrichment. These were the significantly enriched pathways in this VIP list: 
 
+KEGG Pathways: 
+- Aminoacyl-tRNA biosynthesis (FDR p<0.001)
+- Arginine biosynthesis (FDR p<0.001)
+- Alanine, aspartate, and glutamate metabolism (FDR p=0.003)
+- Valine, leucine, and isoleucine biosynthesis (FDR p=0.006)
+- Purine metabolism (FDR p=0.017)
+*In this set purine metabolism is significant whereas in C13 nicotinamide metabolism is significant. All others are the same.* 
+
+Class Enrichment: 
+- Amino acids and peptides (FDR p<0.001)
+- Pyrimidines (FDR p<0.001)
+- Purines (FDR p<0.001)
+- TCA Acids (FDR p<0.001)
+*In C13 samples, Pyrimidines, purines, and TCA acids are not enriched, but cholines, sulfonic acids, monosaccharides, and short chain acids are*  
+
+Overall, nitrogen and amino acid metablism are driving differences between high and ambient treatments. 
