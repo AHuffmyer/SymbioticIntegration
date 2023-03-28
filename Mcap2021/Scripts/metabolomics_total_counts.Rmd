@@ -162,6 +162,7 @@ pcaPlot1<-ggplot2::autoplot(scaled.pca, data=counts_pca, frame.colour="isotope",
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pcaPlot1
 
+ggsave("Mcap2021/Figures/Metabolomics/pca_isotope.jpg", pcaPlot1, width=6, height=6)
 ```
 
 Run PERMANOVA. 
@@ -197,6 +198,7 @@ pcaPlot2<-ggplot2::autoplot(scaled.pca.12C, data=counts_pca_12C, frame.colour="t
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pcaPlot2
 
+ggsave("Mcap2021/Figures/Metabolomics/pca_treatment_12C.jpg", pcaPlot2, width=6, height=6)
 ```
 
 Run PERMANOVA. 
@@ -232,6 +234,8 @@ pcaPlot3<-ggplot2::autoplot(scaled.pca.13C, data=counts_pca_13C, frame.colour="t
         legend.title = element_text(size=18, face="bold"), 
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pcaPlot3
+
+ggsave("Mcap2021/Figures/Metabolomics/pca_treatment_13C.jpg", pcaPlot3, width=6, height=6)
 ```
 
 There may be more of a difference here. 
@@ -309,7 +313,6 @@ metabolites <- read.csv("Mcap2021/Output/Metabolomics/processed_total_ion_counts
 ## Generate PLS-DA for treatment: C13 samples     
 
 Script modified from the following tutorial: https://mixomicsteam.github.io/Bookdown/plsda.html
-
 
 Plot PLSDA 
 
@@ -389,6 +392,80 @@ dev.off()
 ```
 
 These lists represent VIPs that drive separation in treatment in the 13C samples.  
+
+### Plot abundance of the VIP metabolites between treatments - C13
+
+Filter dataframe by desired metabolites and plot presence in each treatment for the C13 samples. 
+```{r}
+C13_vip_list<-c(treatment_VIP_1$Metabolite)
+
+C13_vip_metabolites<-metabolites%>%
+  filter(compound %in% C13_vip_list)%>%
+  filter(isotope=="13C")
+```
+
+Plot abundance of these metabolites in each sample. 
+
+```{r}
+C13_vip_abund_plot<-C13_vip_metabolites%>%
+  
+  ggplot(aes(x=reorder(compound, -log.ion.counts), y=log.ion.counts, color=treatment, group=treatment))+
+  geom_point(position=position_jitterdodge(0.2))+
+  geom_boxplot(aes(group=interaction(compound, treatment)),position=position_dodge(0.2))+
+  scale_color_manual(values=c("blue", "red"), name="Treatment")+
+  ylab("log(normalized ion count)")+
+  xlab("VIP Metabolite")+
+  ggtitle("VIP Abundance - C13")+
+  theme_classic()+
+  theme(
+    axis.text=element_text(color="black", size=12), 
+    axis.text.x=element_text(angle=45, hjust=1), 
+    axis.title=element_text(color="black", face="bold", size=12),
+    plot.margin=margin(1,1,1,1, "cm"),
+    legend.text=element_text(size=12),
+    legend.title=element_text(size=12, face="bold")
+  )
+
+C13_vip_abund_plot
+
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_C13.jpg", C13_vip_abund_plot, width=11, height=6)
+```
+
+Next plot the difference between ambient and high at the treatment level. Negative indicates high is lower than ambient, positive indicates high is higher than ambient. 
+
+```{r}
+C13_vip_diff_plot<-C13_vip_metabolites%>%
+  arrange(compound)%>%
+  group_by(compound, treatment)%>%
+  summarise(mean=mean(log.ion.counts))%>%
+  group_by(compound)%>%
+  summarise(change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  filter(change !=0)%>% #remove zero values (comparing ambient to ambient)
+  
+  ggplot(aes(x=reorder(compound, -change), y=change, color=factor(ifelse(change>0,"Greater in High","Greater in Ambient")), group=compound))+
+  geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
+  scale_color_manual(values=c("blue", "red"), name="Treatment")+
+  ylab("Relative abundance")+
+  xlab("VIP Metabolite")+
+  ggtitle("VIP Difference - C13")+
+  theme_classic()+
+  theme(
+    axis.text=element_text(color="black", size=12), 
+    axis.text.x=element_text(angle=45, hjust=1), 
+    axis.title=element_text(color="black", face="bold", size=12),
+    plot.margin=margin(1,1,1,1, "cm"),
+    legend.text=element_text(size=12),
+    legend.title=element_text(size=12, face="bold")
+  )
+
+C13_vip_diff_plot
+
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.jpg", C13_vip_diff_plot, width=11, height=6)
+```
+
+
+
+
 
 ## Generate PLS-DA for treatment: C12 samples     
 
@@ -470,3 +547,77 @@ dev.off()
 These lists represent VIPs that drive separation in treatment in the 12C samples.  
 
 The separation and list of metabolites are similar between the two isotope treatments. 
+
+### Plot abundance of the VIP metabolites between treatments - C12
+
+Filter dataframe by desired metabolites and plot presence in each treatment for the C12 samples. 
+```{r}
+C12_vip_list<-c(treatment_VIP_C12_1$Metabolite)
+
+C12_vip_metabolites<-metabolites%>%
+  filter(compound %in% C12_vip_list)%>%
+  filter(isotope=="12C")
+```
+
+Plot abundance of these metabolites in each sample. 
+
+```{r}
+C12_vip_abund_plot<-C12_vip_metabolites%>%
+  
+  ggplot(aes(x=reorder(compound, -log.ion.counts), y=log.ion.counts, color=treatment, group=treatment))+
+  geom_point(position=position_jitterdodge(0.2))+
+  geom_boxplot(aes(group=interaction(compound, treatment)),position=position_dodge(0.2))+
+  scale_color_manual(values=c("blue", "red"), name="Treatment")+
+  ylab("log(normalized ion count)")+
+  xlab("VIP Metabolite")+
+  ggtitle("VIP Abundance - C12")+
+  theme_classic()+
+  theme(
+    axis.text=element_text(color="black", size=12), 
+    axis.text.x=element_text(angle=45, hjust=1), 
+    axis.title=element_text(color="black", face="bold", size=12),
+    plot.margin=margin(1,1,1,1, "cm"),
+    legend.text=element_text(size=12),
+    legend.title=element_text(size=12, face="bold")
+  )
+
+C12_vip_abund_plot
+
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_C12.jpg", C12_vip_abund_plot, width=11, height=6)
+```
+
+Next plot the difference between ambient and high at the treatment level. Negative indicates high is lower than ambient, positive indicates high is higher than ambient. 
+
+```{r}
+C12_vip_diff_plot<-C12_vip_metabolites%>%
+  arrange(compound)%>%
+  group_by(compound, treatment)%>%
+  summarise(mean=mean(log.ion.counts))%>%
+  group_by(compound)%>%
+  summarise(change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  filter(change !=0)%>% #remove zero values (comparing ambient to ambient)
+  
+  ggplot(aes(x=reorder(compound, -change), y=change, color=factor(ifelse(change>0,"Greater in High","Greater in Ambient")), group=compound))+
+  geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
+  scale_color_manual(values=c("blue", "red"), name="Treatment")+
+  ylab("Relative abundance")+
+  xlab("VIP Metabolite")+
+  ggtitle("VIP Difference - C12")+
+  theme_classic()+
+  theme(
+    axis.text=element_text(color="black", size=12), 
+    axis.text.x=element_text(angle=45, hjust=1), 
+    axis.title=element_text(color="black", face="bold", size=12),
+    plot.margin=margin(2,2,2,2, "cm"),
+    legend.text=element_text(size=12),
+    legend.title=element_text(size=12, face="bold")
+  )
+
+C12_vip_diff_plot
+
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C12.jpg", C12_vip_diff_plot, width=11, height=6)
+```
+
+There is some variation in metabolite differences between C12 and C13. We will discuss how we want to use these data. 
+
+
