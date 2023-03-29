@@ -259,16 +259,6 @@ QUESTIONS:
 - How do we want to use 12C vs 13C? 
 
 
-## Transformations 
-
-Add 1 to all values to account for 0 values and log transform.  
-```{r}
-hist(total_counts$total.ion.count)
-
-total_counts$log.ion.counts<-log10(1+total_counts$total.ion.count)
-
-hist(total_counts$log.ion.counts)
-```
 
 ## Clean metabolite names and remove standards  
 
@@ -305,7 +295,6 @@ Load data if starting from this point in the script.
 
 ```{r}
 metabolites <- read.csv("Mcap2021/Output/Metabolomics/processed_total_ion_counts.csv")
-
 ```
 
 `log.ion.counts` indicates log transformed median normalized ion counts for each metabolite as a sum of ion counts from C12 parent and C13 labels to generate total metabolite abundance regardless of labeling. 
@@ -650,4 +639,4 @@ Class Enrichment:
 - TCA Acids (FDR p<0.001)
 *In C13 samples, Pyrimidines, purines, and TCA acids are not enriched, but cholines, sulfonic acids, monosaccharides, and short chain acids are*  
 
-Overall, nitrogen and amino acid metablism are driving differences between high and ambient treatments. 
+Overall, nitrogen and amino acid/peptide metabolism are driving differences between high and ambient treatments. 
