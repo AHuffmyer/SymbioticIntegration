@@ -1,5 +1,5 @@
 ---
-title: Montipora capitata 2021 thermal stress metabolomics analysis
+title: Montipora capitata 2021 thermal stress metabolomics analysis - ion counts
 author: "AS Huffmyer"
 date: '2023'
 output:
@@ -13,6 +13,8 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+
+# Set up 
 
 Set up workspace, set options, and load required packages.    
 ```{r}
@@ -251,14 +253,6 @@ permanova
 ```
 
 There is a difference between treatments in the 13C samples (p=0.005). We will investigate these differences more at the individual metabolite level and the labeling patterns. 
-
-
-QUESTIONS: 
-- How to get total metabolite abundance - by summing all "isotopeLabel" types together? Is this the right way of doing this? 
-- Is normalizing to sample median the right way to normalize? 
-- How do we want to use 12C vs 13C? 
-
-
 
 ## Clean metabolite names and remove standards  
 
@@ -640,3 +634,11 @@ Class Enrichment:
 *In C13 samples, Pyrimidines, purines, and TCA acids are not enriched, but cholines, sulfonic acids, monosaccharides, and short chain acids are*  
 
 Overall, nitrogen and amino acid/peptide metabolism are driving differences between high and ambient treatments. 
+
+
+# Questions 
+
+- How to get total metabolite abundance - by summing all "isotopeLabel" types together? Is this the right way of doing this? 
+- Is normalizing to sample median the right way to normalize? 
+- How do we want to use 12C vs 13C? 
+
