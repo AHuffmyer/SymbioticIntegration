@@ -52,3 +52,7 @@ Mcap2021/Output/Respiration/PhotosynthesisPlots/*.pdf
 Mcap2021/Figures/Metabolomics/metabolite_pool_vs_labeling
 Mcap2021/Figures/Metabolomics/metabolite_pool_vs_enrichment
 Mcap2021/Figures/Metabolomics/position_plots
+Mcap2021/Figures/Metabolomics/enrichment_vs_labeling
+Mcap2021/Figures/Metabolomics/label_prop_plots
+Mcap2021/Figures/Metabolomics/enrichment_plots
+Mcap2021/Figures/Metabolomics/abundance_plots
