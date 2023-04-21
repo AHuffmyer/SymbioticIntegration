@@ -777,6 +777,52 @@ Xylose-5-phosphate
 - Monosaccharides
 - Sulfonic acids 
 
+### Plot C13 abundance for each metabolite  
+
+```{r}
+compound_list<-pool_size%>%
+  filter(isotope=="13C")%>%
+  select(Compound)
+
+compound_list<-c(levels(as.factor(compound_list$Compound)))  
+
+pool_size_plotting<-plyr::ddply(pool_size, c("treatment", "Compound", "isotope"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+pool_size_plotting<-pool_size_plotting%>%
+  filter(isotope=="13C")
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(pool_size_plotting, Compound == compound)
+  
+  abundance.plot <-  ggplot(compound_data, aes(x = treatment, y = mean)) + 
+    geom_bar(stat="identity", aes(color=treatment, group=treatment), fill="white", position=position_dodge(), linewidth=1) + 
+    scale_color_manual(name="Temperature",values=c("blue", "red"))+
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), position=position_dodge(0.9), width=0.0, linewidth=1)+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("Pool Size (log intensity)")+
+    xlab("Treatment")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/abundance_plots/", compound, ".jpeg"), plot=abundance.plot, width=4, height=4, units="in")
+
+}
+```
+
 ### Differences by temperature in C12 samples 
 
 Generate a PLS-DA and plot.  
@@ -1102,18 +1148,18 @@ levels(enrichment$Compound) #names are now cleaned
 
 ### Plot enrichment level for each metabolite     
 
-Plot pool size in descending order by temperature treatment. 
+Plot enrichment in descending order by temperature treatment. 
 
 ```{r}
 #make summary table
-enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound"), summarise,
+enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), summarise,
                 N    = length(enrichment[!is.na(enrichment)]),
                 mean = mean(enrichment, na.rm=TRUE),
                 sd   = sd(enrichment, na.rm=TRUE),
                 se   = sd / sqrt(N)
 )
 
-enrichment_plotting<-enrichment_plotting%>%arrange(Compound)
+enrichment_plotting<-enrichment_plotting%>%arrange(Compound)%>%filter(isotope=="13C")
 ```
 
 Plot enrichment for each metabolite. 
@@ -1267,6 +1313,7 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_List_enrichment.jpg", VIP_list_plot_en
 ```
 
 These lists represent VIPs that drive separation in enrichment by treatment in the 13C samples.  
+
 #### Plot abundance of the VIP metabolites between treatments - enrichment
 
 Filter dataframe by desired metabolites and plot presence in each treatment for enrichment. 
@@ -1336,6 +1383,7 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.jpg", enrich_vip
 I submitted the VIP list to metaboanalyst to conduct KEGG/class enrichment. These were the significantly enriched pathways in this VIP list. 
 
 #### *Metabolites that are more enriched at high temperature:*   
+
 ```{r}
 test<-enrich_vip_metabolites%>%
   arrange(Compound)%>%
@@ -1444,6 +1492,52 @@ How does this relate to higher pool size of glucose in high temperature? Perhaps
 - TCA acids
 - Monosaccharides
 - Organic phosphoric acids
+
+### Plot enrichment for each metabolite  
+
+```{r}
+compound_list<-enrichment%>%
+  filter(isotope=="13C")%>%
+  select(Compound)
+
+compound_list<-c(levels(as.factor(compound_list$Compound)))  
+
+enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+enrichment_plotting<-enrichment_plotting%>%
+  filter(isotope=="13C")
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(enrichment_plotting, Compound == compound)
+  
+  enrichment.plot <-  ggplot(compound_data, aes(x = treatment, y = mean)) + 
+    geom_bar(stat="identity", aes(color=treatment, group=treatment), fill="white", position=position_dodge(), linewidth=1) + 
+    scale_color_manual(name="Temperature",values=c("blue", "red"))+
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), position=position_dodge(0.9), width=0.0, linewidth=1)+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("Enrichment")+
+    xlab("Treatment")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/enrichment_plots/", compound, ".jpeg"), plot=enrichment.plot, width=4, height=4, units="in")
+
+}
+```
 
 # Is metabolite labeling proportion different between temperature treatments? 
 
@@ -1892,6 +1986,45 @@ These are similar to enrichment results above. There is differential labeling in
 - Monosaccharides
 - Organic phosphoric acids
 
+### Plot labeling for each metabolite  
+
+```{r}
+compound_list<-c(levels(as.factor(prop_fractions$Compound)))  
+
+label_plotting<-plyr::ddply(prop_fractions, c("treatment", "Compound"), summarise,
+                N    = length(labeled[!is.na(labeled)]),
+                mean = mean(labeled, na.rm=TRUE),
+                sd   = sd(labeled, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(label_plotting, Compound == compound)
+  
+  label.plot <-  ggplot(compound_data, aes(x = treatment, y = mean)) + 
+    geom_bar(stat="identity", aes(color=treatment, group=treatment), fill="white", position=position_dodge(), linewidth=1) + 
+    scale_color_manual(name="Temperature",values=c("blue", "red"))+
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), position=position_dodge(0.9), width=0.0, linewidth=1)+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("Prop. Pool Labeled")+
+    xlab("Treatment")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/label_prop_plots/", compound, ".jpeg"), plot=label.plot, width=4, height=4, units="in")
+
+}
+```
+
 # Does the location of carbon labeling differ for metabolites of interest between treatments? 
 
 Next, we look at the position of labeling on each metabolite. We will first run a linear model to look for an interaction between metabolite, temperature and location. This will identify metabolites that have differential label location mediated by temperature treatment. 
@@ -1997,10 +2130,10 @@ Plot label location for compounds of interest to confirm that there is no differ
 
 Run this in a loop and store plots in a folder for each compound.  
 
-First generate means for metabolites with significant interctive effects from above. 
+First generate means for metabolites with significant interactive effects from above. 
 ```{r}
 # create a vector of compound names
-compound_list <- c(levels(as.factor(sign_position_metabolites$Compound)))
+compound_list <- c(levels(as.factor(fraction_position$Compound)))
 
 #calculate means of position label for each treatment
 position_plotting<-plyr::ddply(fractions, c("treatment","Position", "Compound", "isotope"), summarise,
@@ -2164,7 +2297,6 @@ for (metabolite in metabolite_list){
 
 ```
 
-
 ### Pool size vs labeling 
 
 Plot correlation between the raw values of pool size and labeling, colored by treatment. 
@@ -2208,6 +2340,55 @@ for (metabolite in metabolite_list){
   
   #save the plot
   ggsave(paste0("Mcap2021/Figures/Metabolomics/metabolite_pool_vs_labeling/", metabolite, ".jpeg"), plot=plot, width=5, height=5)
+  
+}
+
+```
+
+### Labeling vs enrichment 
+
+Plot correlation between the raw values of enrichment and labeling, colored by treatment. We are expecting a high correlation. 
+
+```{r}
+enrich_vs_labeling_correlation<-master%>%
+  
+  ggplot(aes(x=enrichment, y=labeled, color=treatment))+
+  geom_point()+
+  stat_smooth(geom="smooth", method="lm")+
+  scale_color_manual(values=c("blue", "red"))+
+  theme_classic();enrich_vs_labeling_correlation
+```
+
+There is a strong correlation between per atom enrichment and proportion pool size that is labeled. 
+
+There are some metabolites that are more labeled than expected given the enrichment. 
+
+Plot this relationship for each metabolite individually. 
+```{r}
+metabolite_list<-c(levels(master$Compound))
+
+for (metabolite in metabolite_list){
+  
+  #generate a plot
+  
+  plot <-  master%>%
+    filter(Compound==metabolite)%>%
+    
+    ggplot(aes(x=enrichment, y=labeled, color=treatment))+
+    geom_point(size=4)+
+    ggtitle(metabolite)+
+    xlab("Enrichment")+
+    ylab("Proportion Pool Labeled")+
+    scale_color_manual(values=c("blue", "red"), name="Temperature")+
+    geom_abline(slope=1, intercept=0)+
+    theme_classic()+
+    theme(
+      axis.text=element_text(size=12, color="black"),
+      axis.title=element_text(size=12, color="black", face="bold")
+    )
+  
+  #save the plot
+  ggsave(paste0("Mcap2021/Figures/Metabolomics/enrichment_vs_labeling/", metabolite, ".jpeg"), plot=plot, width=5, height=5)
   
 }
 
