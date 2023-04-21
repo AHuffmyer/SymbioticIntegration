@@ -42,9 +42,13 @@ vignettes/*.pdf
 .DS_Store
 
 #p and r output files
-Output/Respiration/RespirationPlots/*.pdf
-Output/Respiration/PhotosynthesisPlots/*.pdf
+Mcap2021/Output/Respiration/RespirationPlots/*.pdf
+Mcap2021/Output/Respiration/PhotosynthesisPlots/*.pdf
 
 #knit files
 *.html
 
+#large figure folders 
+Mcap2021/Figures/Metabolomics/metabolite_pool_vs_labeling
+Mcap2021/Figures/Metabolomics/metabolite_pool_vs_enrichment
+Mcap2021/Figures/Metabolomics/position_plots
