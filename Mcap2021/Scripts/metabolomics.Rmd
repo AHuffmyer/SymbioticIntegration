@@ -1070,7 +1070,7 @@ Overall, results are very similar between C12 and C13 samples and confirm major 
 
 # Is metabolite atom enrichment different between temperature treatments? 
 
-We will next look at enrichment data to determine whether metabolites are differentially labeled at high temperature on a per atom basis. Enrichment is calculated on a per atom basis - in other words, how enriched are the carbon atoms in the molecule on average? 
+We will next look at enrichment data to determine whether metabolites are differentially labeled at high temperature on a per atom basis. Enrichment is the probability of finding a labeled atom at any single site, expressed as a percentage. 
 
 ## PCA analysis 
 
@@ -1541,7 +1541,9 @@ ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/enrichment_plots/", compou
 
 # Is metabolite labeling proportion different between temperature treatments? 
 
-We wil next look at the proportion of metabolites that have any carbon labeled (labeled) vs those with no label (not labeled), expressed as a proportion. In other words, what proportion of each metabolite in the pool has a label incorporated?
+We will next look at the proportion of metabolites that have any carbon labeled (labeled) vs those with no label (not labeled), expressed as a proportion. In other words, what proportion of each metabolite in the pool has at least one labeled carbon? 
+
+We expect to see similar results between enrichment (likelihood of finding a labeled carbon at any one site) and labeling proportion (proportion of metabolites with greater to or equal to one labeled carbon) for each metabolite. 
 
 ## PCA analysis 
 
@@ -2204,7 +2206,7 @@ We can look at the specific labeling patterns in the plots to see if certain car
 
 For example, in aconitate, there is higher labeling on carbon 1 at high temperature, but equal or slightly higher label at ambient temperature on carbons 2-6. In fructose-6-phosphate, labeling is higher in carbons 1-3 at ambient, but equal in carbons 4-6. 
 
-# Is metabolite turnover different between temperature treatments? 
+# How does temperature treatment affect metabolite pool size and enrichment/labeling and what does this tell us about metabolic pathways?  
 
 Next, examine turnover in metabolites by plotting the expected vs observed for difference in pool size compared to 1) difference in enrichment and 2) difference in labeling for each metabolite (high vs ambient). 
 
@@ -2355,6 +2357,7 @@ enrich_vs_labeling_correlation<-master%>%
   ggplot(aes(x=enrichment, y=labeled, color=treatment))+
   geom_point()+
   stat_smooth(geom="smooth", method="lm")+
+  geom_abline(slope=1)+
   scale_color_manual(values=c("blue", "red"))+
   theme_classic();enrich_vs_labeling_correlation
 ```
@@ -2380,7 +2383,7 @@ for (metabolite in metabolite_list){
     xlab("Enrichment")+
     ylab("Proportion Pool Labeled")+
     scale_color_manual(values=c("blue", "red"), name="Temperature")+
-    geom_abline(slope=1, intercept=0)+
+    stat_smooth(geom="smooth", method="lm", se=FALSE)+
     theme_classic()+
     theme(
       axis.text=element_text(size=12, color="black"),
