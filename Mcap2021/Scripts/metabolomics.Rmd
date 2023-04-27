@@ -41,6 +41,9 @@ if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('br
 if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
 if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
 if ("readxl" %in% rownames(installed.packages()) == 'FALSE') install.packages('readxl') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("data.table" %in% rownames(installed.packages()) == 'FALSE') install.packages('data.table') 
 
 #load packages
 library("ggplot2")
@@ -57,7 +60,9 @@ library("broom")
 library("lme4")
 library("lmerTest")
 library("readxl")
-
+library("emmeans")
+library("multcomp")
+library("data.table")
 ```
 
 # Load Data 
@@ -919,7 +924,7 @@ C12_vip_abund_plot<-C12_vip_metabolites%>%
     legend.title=element_text(size=12, face="bold")
   );C12_vip_abund_plot
 
-ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_C12.jpg", C13_vip_abund_plot, width=11, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_C12.jpg", C12_vip_abund_plot, width=11, height=6)
 ```
 
 This plot shows that glucose, inositol, montiporic acids, glutamate, and other metabolites of interest are also elevated in the C12 isotope treatment. This confirms that the isotope itself is not causing changes in metabolism between treatments.  
@@ -1067,6 +1072,7 @@ This is also the same as the C13 list with added arginine biosynthesis.
 This is a shorter list than C13, but has the same top hit. 
 
 Overall, results are very similar between C12 and C13 samples and confirm major results. 
+
 
 # Is metabolite atom enrichment different between temperature treatments? 
 
@@ -1248,6 +1254,108 @@ Residual  10   653.55 0.77161
 Total     11   847.00 1.00000                 
 
 There appears to be a difference in enrichment by treatment. Investigate this further and see which metabolites are driving the difference with a PLS-DA analysis. 
+
+## Enrichment between light and dark treatments 
+
+We now need to compare enrichment of metabolites between dark and light treatments. We will not use the PCA/PLSDA approach because we want to know which metabolites are different between light and dark, and, importantly, which metabolites are not different. We want to know which metabolites are labeled as a result of photosynthesis (label in the light but not in the dark) and those that are due to host incorporation of the label (labeled in the light and in the dark).  
+
+### Plot enrichment of each metabolite between light and dark isotope treatments    
+
+```{r}
+#make summary table
+dark_plotting<-plyr::ddply(enrichment, c("Compound", "isotope"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+dark_plotting<-dark_plotting%>%arrange(Compound)%>%filter(!isotope=="12C")
+```
+
+Plot enrichment for each metabolite.  
+```{r}
+dark_all_metabolites<-dark_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 0.5, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_all_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_all.jpg", plot=dark_all_metabolites, width=26, height=6)
+```
+
+This shows that the metabolites originating from photosynthsis that we expect to have low label incorporation in the dark do have low label compared to light treatment. For example, glucose, F6P, G6P, and pyruvate have far lower labeling that the light treatment. 
+
+Plot just these metabolites. 
+```{r}
+dark_photo_metabolites<-dark_plotting%>%
+  filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", ""))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_photo_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_photosynthesis.jpg", plot=dark_photo_metabolites, width=12, height=6)
+```
+
+Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. 
+
+This is all good news - the metabolites we expect to be labeled through photosynthesis are indeed labeled only in the light. 
+
+There are some metabolites that are labeled in the dark still - including methionine sulfoxide, citrulline, uridine, tryptophan, UMP, L-argino-succinate, tyrosine, and inosine. This suggests that the labeled carbon in these compounds did not originate through photosynthesis and are instead host derived. 
+
+Plot these metabolites. 
+```{r}
+dark_host_metabolites<-dark_plotting%>%
+  filter(Compound %in% c("Methionine sulfoxide", "Citrulline", "Uridine", "Tryptophan", "UMP", "L-arginino-succinate", "Tyrosine", "Inosine", "Ribitol", "Isocitrate", "Citrate"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_host_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_host.jpg", plot=dark_host_metabolites, width=12, height=6)
+```
+
+We will use these data to understand if the carbon in these compounds is host or symbiont derived.  
 
 ## PLSDA and VIP analysis 
 
@@ -1758,6 +1866,122 @@ Total     11   847.00 1.0000
 
 There appears to be a difference in labeling by treatment. Investigate this further and see which metabolites are driving the difference with a PLS-DA analysis. 
 
+
+### Plot labeling of each metabolite between light and dark isotope treatments    
+
+```{r}
+prop_fractions_dark<-fractions%>%
+  mutate(category=if_else(Position==0, "unlabeled", "labeled"))%>% #assign category of labeled (Position=0) and unlabeled (Position>0)
+  filter(!isotope=="12C")%>% #looking at 13C samples 
+  select(!tank)%>%
+  select(!tube)%>%
+  group_by(Compound, isotope, sample, treatment, category)%>%
+  summarise(label=sum(label, na.rm=TRUE))%>% #calculate the total proportion carbon atoms in the metabolites that are labeld vs unlabeled generating a total of 1 for label + unlabeled for each sample 
+  pivot_wider(names_from=category, values_from=label)%>%
+  mutate(check=labeled+unlabeled)%>% #this shows that the values add up to 1
+  droplevels()
+
+str(prop_fractions_dark)
+```
+
+```{r}
+#make summary table
+dark_label_plotting<-plyr::ddply(prop_fractions_dark, c("Compound", "isotope"), summarise,
+                N    = length(labeled[!is.na(labeled)]),
+                mean = mean(labeled, na.rm=TRUE),
+                sd   = sd(labeled, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+dark_label_plotting<-dark_label_plotting%>%arrange(Compound)
+```
+
+Plot labeling for each metabolite.  
+```{r}
+dark_label_all_metabolites<-dark_label_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Label Proportion")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 0.5, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_label_all_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/labeling_darkvslight_all.jpg", plot=dark_label_all_metabolites, width=26, height=6, dpi=100)
+```
+
+This shows that the metabolites originating from photosynthsis that we expect to have low label incorporation in the dark do have low label compared to light treatment. For example, glucose, F6P, G6P, and pyruvate have far lower labeling that the light treatment. 
+
+Plot just these metabolites. 
+```{r}
+dark_label_photo_metabolites<-dark_label_plotting%>%
+  filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", ""))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Label Proportion")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_label_photo_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/labeling_darkvslight_photosynthesis.jpg", plot=dark_label_photo_metabolites, width=12, height=6)
+```
+
+Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. 
+
+This is all good news - the metabolites we expect to be labeled through photosynthesis are indeed labeled only in the light. 
+
+There are some metabolites that are labeled in the dark still - including methionine sulfoxide, citrulline, uridine, tryptophan, UMP, L-argino-succinate, tyrosine, arginine-glutamine, guanine, and inosine. This suggests that the labeled carbon in these compounds did not originate through photosynthesis and are instead host derived. 
+
+Plot these metabolites. 
+```{r}
+dark_label_host_metabolites<-dark_label_plotting%>%
+  filter(Compound %in% c("Methionine sulfoxide", "Citrulline", "Uridine", "Tryptophan", "UMP", "L-arginino-succinate", "Tyrosine", "Inosine", "Ribitol", "Isocitrate", "Citrate", "Arginine-glutamine", "Guanine"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("green", "blue"))+
+  xlab("Metabolites")+
+  ylab("Label Proportion")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_label_host_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/labeling_darkvslight_host.jpg", plot=dark_label_host_metabolites, width=12, height=6)
+```
+
+We will use these data to understand if the carbon in these compounds is host or symbiont derived.
+
+These results are very similar to the enrichment results above 
+
 ## PLSDA and VIP analysis 
 
 Generate a PLS-DA and plot.  
@@ -2124,7 +2348,16 @@ sign_position_metabolites<-results_table_sign%>%
 levels(as.factor(sign_position_metabolites$Compound))
 ```
 
-There are 23 metabolites with significant treatment:position interactions. 
+There are 22 metabolites with significant treatment:position interactions. 
+
+ [1] "Aconitate"                "AMP"                      "Arginine-Glutamine"      
+ [4] "Citrulline"               "Fructose-6-phosphate"     "Glucose"                 
+ [7] "Glucose-6-phosphate"      "Glutamine"                "Glycerophosphocholine"   
+[10] "Guanosine"                "Isocitrate"               "L-arginino-succinate"    
+[13] "Leucine"                  "NAD+"                     "Pantothenate"            
+[16] "Phenylalanine"            "Pyruvate"                 "Sorbitol"                
+[19] "Thymidine"                "Tryptophan"               "UDP-D-Glucose"           
+[22] "UDP-N-acetyl-glucosamine"
 
 ## Plot label location
 
@@ -2532,4 +2765,7 @@ pool_vs_labeling_change2<-master_treatment%>%
 
 ggsave("Mcap2021/Figures/Metabolomics/change_labeling_vs_poolsize_noacids.jpeg", plot=pool_vs_labeling_change2, width=8, height=6)
 ```
+
+
+
 
