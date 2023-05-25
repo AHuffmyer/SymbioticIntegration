@@ -91,7 +91,7 @@ surv_plot2<-survival %>%
     
     ggplot(., aes(x = as.factor(HoursExposure), y = Larvae.per.mL, group=interaction(HoursExposure, Treatment))) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, HoursExposure)), pch = 21, size=4, position = position_jitterdodge(0.2), alpha=0.2) + 
-    geom_smooth(aes(group=Treatment, color=Treatment), stat="smooth")+
+    geom_smooth(aes(group=Treatment, color=Treatment), method="glm")+
     xlab("Hours Exposure") + 
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+

@@ -88,14 +88,14 @@ settle_plot<-settle %>%
 #ggsave("Mcap2021/Figures/Settlement.png", settle_plot, dpi=300, w=8.5, h=5, units="in")
 ```
 
-Plot all data with loess line.    
+Plot all data with glm line.    
 
 ```{r}
 settle_plot2<-settle %>%
     
     ggplot(., aes(x = DateTime, y = Settled, group=Treatment)) +
     geom_point(aes(fill=Treatment), pch = 21, size=4, position = position_jitterdodge(dodge.width=0.05), alpha=0.3) + 
-    geom_smooth(aes(group=Treatment, color=Treatment), stat="smooth", lwd=2)+
+    geom_smooth(aes(group=Treatment, color=Treatment), method="lm", lwd=2)+
     xlab("Date") + 
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
