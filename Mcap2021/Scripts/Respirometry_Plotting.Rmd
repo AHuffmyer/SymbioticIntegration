@@ -93,6 +93,255 @@ boxplot(PRdata$GP.nmol.org.min)
 ```
 
 No apparent outliers in the data.  
+# **Analyze data**    
+
+## Individual normalized data
+
+### Respiration     
+
+Build linear mixed effect model and examine for Respiration.      
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
+anova(Rmodel1, type="II") 
+summary(Rmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+Rmodel2<-aov(R.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(Rmodel2)
+```
+Same results.  
+
+Check assumptions of model for residual normality and variance. Passes assumptions.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Rmodel2))
+leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Net Photosynthesis   
+
+Build linear mixed effect model and examine for Photosynthesis       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Pmodel1<-lmer(P.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
+anova(Pmodel1, type="II")
+summary(Pmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+Pmodel2<-aov(P.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(Pmodel2)
+```
+In this analysis, treatment is significant.  
+
+Check assumptions of model for residual normality and variance.  
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Pmodel2))
+leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Gross Photosynthesis  
+
+Build linear mixed effect model and examine for GP       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+GPmodel1<-lmer(GP.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
+anova(GPmodel1, type="II")
+summary(GPmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+GPmodel2<-aov(GP.nmol.org.min~Treatment*Temperature, data=PRdata)
+summary(GPmodel2)
+```
+Same results.    
+
+Check assumptions of model for residual normality and variance. Passes.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(GPmodel2))
+leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### P:R    
+ 
+Build linear mixed effect model and examine for PR ratio       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+PRmodel1<-lmer(ratio~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
+anova(PRmodel1, type="II")
+summary(PRmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+PRmodel2<-aov(ratio~Treatment*Temperature, data=PRdata)
+summary(PRmodel2)
+```
+Same results.   
+
+Check assumptions of model for residual normality and variance. Meets assumptions.  
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(PRmodel2))
+leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Generate summary tables of mean and SE for all variables  
+
+Generate summary of all respiration data.  
+
+```{r}
+summary<-PRdata%>%
+  group_by(Temperature, Treatment)%>%
+  summarise(N=length(R.nmol.org.min),
+            Mean_R=mean(R.nmol.org.min), 
+            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min), 
+            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min), 
+            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio), 
+            SE_PR=sd(ratio)/sqrt(length(ratio)))
+
+summary%>%
+  write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
+```
+
+## Size normalized data
+
+Read in size data.  
+
+```{r}
+size<-read_csv("Mcap2021/Output/mean_size.csv")
+```
+
+Calculate a new column for size normalized data by dividing metabolic rate per individual by the average individual size for each treatment. Calculate P:R as GP / R after size normalization. 
+
+```{r}
+PRdata$volume.mm3<-size$mean.vol.mm3[match(PRdata$Treatment, size$treatment)]
+
+PRdata<-PRdata%>%
+  mutate(R.nmol.mm3.min=R.nmol.org.min/volume.mm3)%>%
+  mutate(P.nmol.mm3.min=P.nmol.org.min/volume.mm3)%>%
+  mutate(GP.nmol.mm3.min=GP.nmol.org.min/volume.mm3)%>%
+  mutate(ratio.size=abs(GP.nmol.mm3.min)/abs(R.nmol.mm3.min))
+```
+
+### Respiration     
+
+Build linear mixed effect model and examine for Respiration.      
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Rmodel1<-lmer(R.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
+anova(Rmodel1, type="II") 
+summary(Rmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+Rmodel2<-aov(R.nmol.mm3.min~Treatment*Temperature, data=PRdata)
+summary(Rmodel2)
+```
+Same results.  
+
+Check assumptions of model for residual normality and variance. Passes assumptions.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Rmodel2))
+leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Net Photosynthesis   
+
+Build linear mixed effect model and examine for Photosynthesis       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+Pmodel1<-lmer(P.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
+anova(Pmodel1, type="II")
+summary(Pmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+Pmodel2<-aov(P.nmol.mm3.min~Treatment*Temperature, data=PRdata)
+summary(Pmodel2)
+```
+In this analysis, treatment is significant.  
+
+Check assumptions of model for residual normality and variance.  
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(Pmodel2))
+leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Gross Photosynthesis  
+
+Build linear mixed effect model and examine for GP       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+GPmodel1<-lmer(GP.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
+anova(GPmodel1, type="II")
+summary(GPmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+GPmodel2<-aov(GP.nmol.mm3.min~Treatment*Temperature, data=PRdata)
+summary(GPmodel2)
+```
+Same results.    
+
+Check assumptions of model for residual normality and variance. Passes.    
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(GPmodel2))
+leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### P:R    
+ 
+Build linear mixed effect model and examine for PR ratio       
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+PRmodel1<-lmer(ratio.size~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
+anova(PRmodel1, type="II")
+summary(PRmodel1)
+```
+
+Run only as regular ANOVA.  
+```{r}
+PRmodel2<-aov(ratio.size~Treatment*Temperature, data=PRdata)
+summary(PRmodel2)
+```
+Same results.   
+
+Check assumptions of model for residual normality and variance. Meets assumptions.  
+
+```{r, results=TRUE, warning=FALSE, message=FALSE}
+qqPlot(residuals(PRmodel2))
+leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
+```
+
+### Generate summary tables of mean and SE for all variables  
+
+Generate summary of all respiration data.  
+
+```{r}
+summary<-PRdata%>%
+  group_by(Temperature, Treatment)%>%
+  summarise(N=length(R.nmol.org.min),
+            Mean_R=mean(R.nmol.org.min), 
+            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min), 
+            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min), 
+            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio), 
+            SE_PR=sd(ratio)/sqrt(length(ratio)))
+
+summary%>%
+  write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
+```
 
 # **Plotting**  
 
@@ -341,24 +590,6 @@ ggsave(filename="Mcap2021/Figures/Respiration/respirometry_fig.png", plot=full_f
 
 ## Size normalized data
 
-Read in size data.  
-
-```{r}
-size<-read_csv("Mcap2021/Output/mean_size.csv")
-```
-
-Calculate a new column for size normalized data by dividing metabolic rate per individual by the average individual size for each treatment. Calculate P:R as GP / R after size normalization. 
-
-```{r}
-PRdata$volume.mm3<-size$mean.vol.mm3[match(PRdata$Treatment, size$treatment)]
-
-PRdata<-PRdata%>%
-  mutate(R.nmol.mm3.min=R.nmol.org.min/volume.mm3)%>%
-  mutate(P.nmol.mm3.min=P.nmol.org.min/volume.mm3)%>%
-  mutate(GP.nmol.mm3.min=GP.nmol.org.min/volume.mm3)%>%
-  mutate(ratio.size=abs(GP.nmol.mm3.min)/abs(R.nmol.mm3.min))
-```
-
 ### Respiration  
 
 Plot data as an interaction plot   
@@ -376,10 +607,10 @@ r_plot_size<-PRdata %>%
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     #scale_y_continuous(limits=c(0.5, -0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
-    ylim(0, 0.6)+
-    geom_text(x=1.5, y=0.07, label="Treatment p=0.342", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.187", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.04, label="Interaction p=0.199", color="darkgray", size=6)+
+    ylim(0, 0.95)+
+    geom_text(x=1.5, y=0.10, label="Treatment p=0.410", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.00, label="Temperature p=0.189", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.05, label="Interaction p=0.202", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -430,10 +661,10 @@ p_plot_size<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Net P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
-    geom_text(x=1.5, y=0.07, label="Treatment p=0.391", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.260", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.04, label="Interaction p=0.403", color="darkgray", size=6)+
-    ylim(0, 0.6) +
+    geom_text(x=1.5, y=0.1, label="Treatment p=0.310", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.00, label="Temperature p=0.261", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.05, label="Interaction p=0.407", color="darkgray", size=6)+
+    ylim(0, 0.95) +
     theme_classic() + 
     theme(
       legend.position="none",
@@ -484,10 +715,10 @@ gp_size_plot<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Gross P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
-    ylim(0, 0.6) +
-    geom_text(x=1.5, y=0.07, label="Treatment p=0.857", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.130", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.04, label="Interaction p=0.183", color="darkgray", size=6)+
+    ylim(0, 2) +
+    geom_text(x=1.5, y=0.24, label="Treatment p=0.994", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.0, label="Temperature p=0.131", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.12, label="Interaction p=0.186", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -586,234 +817,3 @@ ggsave(filename="Mcap2021/Figures/Respiration/respirometry_size_fig.png", plot=f
 ```
 
 
-# **Analyze data**    
-
-## Individual normalized data
-
-### Respiration     
-
-Build linear mixed effect model and examine for Respiration.      
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(Rmodel1, type="II") 
-summary(Rmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-Rmodel2<-aov(R.nmol.org.min~Treatment*Temperature, data=PRdata)
-summary(Rmodel2)
-```
-Same results.  
-
-Check assumptions of model for residual normality and variance. Passes assumptions.    
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Rmodel2))
-leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Net Photosynthesis   
-
-Build linear mixed effect model and examine for Photosynthesis       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-lmer(P.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(Pmodel1, type="II")
-summary(Pmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-Pmodel2<-aov(P.nmol.org.min~Treatment*Temperature, data=PRdata)
-summary(Pmodel2)
-```
-In this analysis, treatment is significant.  
-
-Check assumptions of model for residual normality and variance.  
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Pmodel2))
-leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Gross Photosynthesis  
-
-Build linear mixed effect model and examine for GP       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-lmer(GP.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(GPmodel1, type="II")
-summary(GPmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-GPmodel2<-aov(GP.nmol.org.min~Treatment*Temperature, data=PRdata)
-summary(GPmodel2)
-```
-Same results.    
-
-Check assumptions of model for residual normality and variance. Passes.    
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(GPmodel2))
-leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### P:R    
- 
-Build linear mixed effect model and examine for PR ratio       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-lmer(ratio~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(PRmodel1, type="II")
-summary(PRmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-PRmodel2<-aov(ratio~Treatment*Temperature, data=PRdata)
-summary(PRmodel2)
-```
-Same results.   
-
-Check assumptions of model for residual normality and variance. Meets assumptions.  
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(PRmodel2))
-leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Generate summary tables of mean and SE for all variables  
-
-Generate summary of all respiration data.  
-
-```{r}
-summary<-PRdata%>%
-  group_by(Temperature, Treatment)%>%
-  summarise(N=length(R.nmol.org.min),
-            Mean_R=mean(R.nmol.org.min), 
-            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
-            Mean_P=mean(P.nmol.org.min), 
-            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
-            Mean_GP=mean(GP.nmol.org.min), 
-            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
-            Mean_PR=mean(ratio), 
-            SE_PR=sd(ratio)/sqrt(length(ratio)))
-
-summary%>%
-  write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
-```
-
-## Size normalized data
-
-### Respiration     
-
-Build linear mixed effect model and examine for Respiration.      
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Rmodel1<-lmer(R.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(Rmodel1, type="II") 
-summary(Rmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-Rmodel2<-aov(R.nmol.mm3.min~Treatment*Temperature, data=PRdata)
-summary(Rmodel2)
-```
-Same results.  
-
-Check assumptions of model for residual normality and variance. Passes assumptions.    
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Rmodel2))
-leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Net Photosynthesis   
-
-Build linear mixed effect model and examine for Photosynthesis       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-lmer(P.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(Pmodel1, type="II")
-summary(Pmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-Pmodel2<-aov(P.nmol.mm3.min~Treatment*Temperature, data=PRdata)
-summary(Pmodel2)
-```
-In this analysis, treatment is significant.  
-
-Check assumptions of model for residual normality and variance.  
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(Pmodel2))
-leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Gross Photosynthesis  
-
-Build linear mixed effect model and examine for GP       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-lmer(GP.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(GPmodel1, type="II")
-summary(GPmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-GPmodel2<-aov(GP.nmol.mm3.min~Treatment*Temperature, data=PRdata)
-summary(GPmodel2)
-```
-Same results.    
-
-Check assumptions of model for residual normality and variance. Passes.    
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(GPmodel2))
-leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### P:R    
- 
-Build linear mixed effect model and examine for PR ratio       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-lmer(ratio.size~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(PRmodel1, type="II")
-summary(PRmodel1)
-```
-
-Run only as regular ANOVA.  
-```{r}
-PRmodel2<-aov(ratio.size~Treatment*Temperature, data=PRdata)
-summary(PRmodel2)
-```
-Same results.   
-
-Check assumptions of model for residual normality and variance. Meets assumptions.  
-
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-qqPlot(residuals(PRmodel2))
-leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
-```
-
-### Generate summary tables of mean and SE for all variables  
-
-Generate summary of all respiration data.  
-
-```{r}
-summary<-PRdata%>%
-  group_by(Temperature, Treatment)%>%
-  summarise(N=length(R.nmol.org.min),
-            Mean_R=mean(R.nmol.org.min), 
-            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
-            Mean_P=mean(P.nmol.org.min), 
-            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
-            Mean_GP=mean(GP.nmol.org.min), 
-            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
-            Mean_PR=mean(ratio), 
-            SE_PR=sd(ratio)/sqrt(length(ratio)))
-
-summary%>%
-  write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
-```

@@ -41,6 +41,17 @@ library(emmeans)
 
 ```{r}
 size<-read_csv("Mcap2021/Data/Size/larval_size.csv")
+
+size<-size%>%
+  select(!volume.mm3)
+```
+
+# Calculate size 
+
+Calculate volume as a prolate spheroid. 
+```{r}
+size<-size%>%
+  mutate(volume.mm3=((4/3) * pi * (length.mm/2) * (width.mm/2)^2))
 ```
 
 # Visualize  
@@ -103,9 +114,9 @@ size_plot_3a<-size %>%
     scale_color_manual(values=c("blue", "red"))+
     xlab("") + 
     ylab(expression(bold(paste("Larval Size (mm"^3, ")"))))+
-    geom_text(x=1.5, y=0.0, label="p<0.001", color="black", size=5)+
+    geom_text(x=1.5, y=0.0, label="p=0.041", color="black", size=5)+
     theme_classic() + 
-    ylim(0,0.18)+
+    ylim(0,0.09)+
     theme(
       legend.position="none",
       axis.title=element_text(face="bold", size=14),
@@ -131,9 +142,9 @@ size_plot_3b<-size %>%
     scale_fill_manual(name="Treatment", values=c("blue", "red"))+
     scale_color_manual(name="Treatment", values=c("blue", "red"))+
     xlab("Treatment") + 
-    ylim(0.07, 0.1)+
+    ylim(0.0, 0.04)+
     ylab(expression(bold(paste("Larval Size (mm"^3, ")"))))+
-    geom_text(x=1.5, y=0.073, label="p<0.001", color="black", size=8)+
+    geom_text(x=1.5, y=0.01, label="p=0.041", color="black", size=8)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -223,11 +234,11 @@ size_plot_full<-size %>%
     #geom_line()+
     scale_fill_manual(values=c("blue", "gray", "red"), name="Treatment")+
     scale_color_manual(values=c("blue", "gray", "red"), name="Treatment")+
-    ylim(0,0.17)+
+    ylim(0,0.075)+
     xlab("Timepoint") + 
     ylab(expression(bold(paste("Larval Size (mm"^3, ")"))))+
-    geom_text(x=1.5, y=0.01, label="time p<0.001", color="black", size=4)+
-    geom_text(x=1.5, y=0.0, label="treatment p=0.001", color="black", size=4)+
+    geom_text(x=1.5, y=0.069, label="time p=0.070", color="darkgray", size=4)+
+    geom_text(x=1.5, y=0.066, label="treatment p=0.047", color="black", size=4)+
   
   #baseline to ambient
     geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = Ambient), colour="blue", data = segpoints, size=2, show.legend=FALSE) +
