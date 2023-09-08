@@ -1,0 +1,86 @@
+---
+title: Metabolomics labeling time series method validation analysis 
+author: "AS Huffmyer"
+date: '2023'
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+  pdf_document:
+    keep_tex: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+This script analyzes stable isotope (C13) metabolomic label incorporation data over a 24 hour time series in *Montipora capitata* larvae. 
+
+
+
+
+
+
+
+# Set Up 
+
+Set up workspace, set options, and load required packages.    
+```{r}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+## install packages if you dont already have them in your library
+if ("tidyverse" %in% rownames(installed.packages()) == 'FALSE') install.packages('tidyverse') 
+if ("vegan" %in% rownames(installed.packages()) == 'FALSE') install.packages('vegan') 
+if ("ggplot2" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggplot2') 
+if ("factoextra" %in% rownames(installed.packages()) == 'FALSE') install.packages('factoextra') 
+if ("ggfortify" %in% rownames(installed.packages()) == 'FALSE') install.packages('ggfortify') 
+if ("naniar" %in% rownames(installed.packages()) == 'FALSE') install.packages('naniar') 
+if ("cowplot" %in% rownames(installed.packages()) == 'FALSE') install.packages('cowplot') 
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+if ("mixOmics" %in% rownames(installed.packages()) == 'FALSE') BiocManager::install("mixOmics") 
+if ("RVAideMemoire" %in% rownames(installed.packages()) == 'FALSE') install.packages('RVAideMemoire') 
+if ("VennDiagram" %in% rownames(installed.packages()) == 'FALSE') install.packages('VennDiagram') 
+if ("broom" %in% rownames(installed.packages()) == 'FALSE') install.packages('broom') 
+if ("lme4" %in% rownames(installed.packages()) == 'FALSE') install.packages('lme4') 
+if ("lmerTest" %in% rownames(installed.packages()) == 'FALSE') install.packages('lmerTest') 
+if ("readxl" %in% rownames(installed.packages()) == 'FALSE') install.packages('readxl') 
+if ("emmeans" %in% rownames(installed.packages()) == 'FALSE') install.packages('emmeans') 
+if ("multcomp" %in% rownames(installed.packages()) == 'FALSE') install.packages('multcomp') 
+if ("data.table" %in% rownames(installed.packages()) == 'FALSE') install.packages('data.table') 
+
+#load packages
+library("ggplot2")
+library('vegan')
+library('factoextra')
+library('ggfortify')
+library('naniar')
+library('cowplot')
+library("mixOmics")
+library("tidyverse")
+library("RVAideMemoire")
+library("VennDiagram")
+library("broom")
+library("lme4")
+library("lmerTest")
+library("readxl")
+library("emmeans")
+library("multcomp")
+library("data.table")
+```
+
+# Load Data 
+
+Load data. 
+```{r}
+#load pool size quantified as total intensity for each metabolite, this dataset will require median normalization
+pool_size<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Pool Size")
+
+#load per atom basis for labeling proportions, this dataset is proportion data, so no normalization is necessary
+enrichment<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Enrichment")
+
+#load proportion labeling by Number Carbons Labeled, this dataset is proportion data, so no normalization is necessary
+fractions<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Fractions")
+```
