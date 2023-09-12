@@ -16,12 +16,6 @@ editor_options:
 
 This script analyzes stable isotope (C13) metabolomic label incorporation data over a 24 hour time series in *Montipora capitata* larvae. 
 
-
-
-
-
-
-
 # Set Up 
 
 Set up workspace, set options, and load required packages.    
@@ -76,11 +70,651 @@ library("data.table")
 Load data. 
 ```{r}
 #load pool size quantified as total intensity for each metabolite, this dataset will require median normalization
-pool_size<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Pool Size")
+pool_size<-read_xlsx("Mcap2021/Data/Metabolomics/timeseries_validation_data.xlsx", sheet="Pool Size")
 
 #load per atom basis for labeling proportions, this dataset is proportion data, so no normalization is necessary
-enrichment<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Enrichment")
-
-#load proportion labeling by Number Carbons Labeled, this dataset is proportion data, so no normalization is necessary
-fractions<-read_xlsx("Mcap2021/Data/Metabolomics/metabolite_data.xlsx", sheet="Fractions")
+enrichment<-read_xlsx("Mcap2021/Data/Metabolomics/timeseries_validation_data.xlsx", sheet="Enrichment")
 ```
+
+# Normalization of pool size 
+
+```{r}
+str(pool_size)
+```
+
+Normalize pool size to the sample median to account for any variation in the number of larvae across samples. 
+```{r}
+pool_size <- pool_size %>%
+  mutate(across(`Mcap_13C_Host_1hr_rep1`:`Pacuta_13C-Dark_Host_Ambient_90`, ~ .x / median(.x, na.rm = TRUE))) #normalize the intensity values to the columns median to account for any variation in larval number in each sample 
+```
+
+```{r}
+pool_size<-pool_size%>%
+  select(!starts_with("Blank"))
+```
+
+Mutate the data to be in long rather than wide format and keep only relevant columns.  
+
+```{r}
+pool_size <- pool_size %>% 
+  pivot_longer(names_to = "sample", values_to="intensity.norm", `Mcap_13C_Host_1hr_rep1`:`Pacuta_13C-Dark_Host_Ambient_90`)%>%
+  select(c(Compound, sample, intensity.norm))
+```
+
+Add metadata column with isotope, treatment, tank, and tube ID. 
+```{r}
+pool_size<-pool_size%>%
+  separate(sample, c("species", "isotope", "fraction","treatment", "tube"), sep="_", remove = FALSE)
+
+#convert to factors 
+pool_size$species<-as.factor(pool_size$species)
+pool_size$isotope<-as.factor(pool_size$isotope)
+pool_size$Compound<-as.factor(pool_size$Compound)
+pool_size$fraction<-as.factor(pool_size$fraction)
+pool_size$treatment<-as.factor(pool_size$treatment)
+```
+
+Check distribution of data.  
+```{r}
+hist(pool_size$intensity.norm)
+hist(log(1+pool_size$intensity.norm))
+```
+
+Since distribution is very skewed, add log normalized column. 
+```{r}
+pool_size$log.intensity.norm<-log(1+pool_size$intensity.norm)
+```
+
+Clean metabolite names and remove standards.  
+
+Clean any names that have (+HAc), rename to just include the metabolite name.  
+
+```{r, echo=FALSE, results=FALSE}
+levels(pool_size$Compound)
+grep("PosIS", levels(pool_size$Compound)) 
+grep("NegIS", levels(pool_size$Compound)) 
+grep("(+HAc)", levels(pool_size$Compound)) #3 metabolites with HAc+, need to rename
+grep("SIM", levels(pool_size$Compound)) 
+
+length(levels(pool_size$Compound)) #we have 109 metabolites in our dataset 
+
+pool_size<-pool_size%>%
+  mutate(Compound = str_remove(Compound, pattern=fixed(' (+HAc)')))%>% #rename any with +HAc to remove the +HAc
+  mutate(Compound = as.factor(Compound))
+
+pool_size<- droplevels(pool_size)
+length(levels(pool_size$Compound))
+levels(pool_size$Compound) #names are now cleaned
+```
+
+
+# Prepare enrichment data 
+
+```{r}
+str(enrichment)
+```
+
+```{r}
+enrichment<-enrichment%>%
+  select(!starts_with("Blank"))
+```
+
+Mutate the data to be in long rather than wide format and keep only relevant columns.  
+
+```{r}
+enrichment <- enrichment %>% 
+  pivot_longer(names_to = "sample", values_to="enrichment", `Mcap_13C_Host_1hr_rep1`:`Pacuta_13C-Dark_Host_Ambient_90`)%>%
+  select(c(Compound, sample, enrichment))
+```
+
+Add metadata column with isotope, treatment, tank, and tube ID. 
+```{r}
+enrichment<-enrichment%>%
+  separate(sample, c("species", "isotope", "fraction","treatment", "tube"), sep="_", remove = FALSE)
+
+#convert to factors 
+enrichment$species<-as.factor(enrichment$species)
+enrichment$isotope<-as.factor(enrichment$isotope)
+enrichment$Compound<-as.factor(enrichment$Compound)
+enrichment$fraction<-as.factor(enrichment$fraction)
+enrichment$treatment<-as.factor(enrichment$treatment)
+```
+
+Check distribution of data.  
+```{r}
+hist(enrichment$enrichment)
+```
+
+Clean metabolite names and remove standards.  
+
+Clean any names that have (+HAc), rename to just include the metabolite name.  
+
+```{r, echo=FALSE, results=FALSE}
+levels(enrichment$Compound)
+grep("PosIS", levels(enrichment$Compound)) 
+grep("NegIS", levels(enrichment$Compound)) 
+grep("(+HAc)", levels(enrichment$Compound)) #3 metabolites with HAc+, need to rename
+grep("SIM", levels(enrichment$Compound)) 
+
+length(levels(enrichment$Compound)) #we have 109 metabolites in our dataset 
+
+enrichment<-enrichment%>%
+  mutate(Compound = str_remove(Compound, pattern=fixed(' (+HAc)')))%>% #rename any with +HAc to remove the +HAc
+  mutate(Compound = as.factor(Compound))
+
+enrichment<- droplevels(enrichment)
+length(levels(enrichment$Compound))
+levels(enrichment$Compound) #names are now cleaned
+```
+
+# How does pool size of key metabolites change over time in Montipora capitata larvae? 
+
+Subset to Montipora capitata larvae. 
+```{r}
+mcap_data<-pool_size%>%
+  filter(species=="Mcap")
+```
+
+Set levels of treatment. 
+```{r}
+mcap_data<-mcap_data%>%
+  mutate(treatment=factor(treatment, levels=c("1hr", "3hr", "6hr", "12hr", "24hr")))
+```
+
+Plot pool size in descending order by isotope treatment. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+#make summary table
+data_plotting<-plyr::ddply(mcap_data, c("treatment", "Compound"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+data_plotting<-data_plotting%>%arrange(Compound)
+```
+
+```{r}
+mcap_plot1<-data_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=treatment, group=treatment)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_point(data=mcap_data, aes(y=log.intensity.norm, x=reorder(Compound, -log.intensity.norm), fill=treatment), size=1)+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("log(Normalized Pool Size)")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );mcap_plot1
+```
+
+Montiporic acids are the most abundant compound, as seen in other datasets. 
+
+Run a loop to plot each compound over the time series. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+compound_list<-c(levels(as.factor(mcap_data$Compound)))  
+
+pool_plotting<-plyr::ddply(mcap_data, c("treatment", "Compound"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(pool_plotting, Compound == compound)
+  full_data <- subset(mcap_data, Compound == compound)
+  
+  label.plot <-  ggplot(compound_data, aes(x = treatment, y = mean)) + 
+    geom_bar(stat="identity", aes(color=treatment, group=treatment), fill="white", position=position_dodge(), linewidth=1) + 
+    geom_point(data=full_data, aes(y=log.intensity.norm, x=treatment, fill=treatment), size=1)+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("log(Normalized Pool Size)")+
+    xlab("Time")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/timeseries_validation/pool_size_plots/", compound, ".jpeg"), plot=label.plot, width=4, height=4, units="in")
+
+}
+```
+
+Next look at specific compounds of interest - photosynthates and metabolic intermediates of photosynthates. 
+```{r}
+compound_list<-c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate") 
+
+pool_plotting<-plyr::ddply(mcap_data, c("treatment", "Compound"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+full_data<-mcap_data%>%
+  filter(Compound %in% compound_list)
+
+mcap_plot2<-pool_plotting%>%
+  filter(Compound %in% compound_list)%>%
+  
+    ggplot(aes(x = treatment, y = mean)) + 
+    facet_wrap(~Compound)+
+    geom_bar(stat="identity", aes(group=treatment), fill="white", color="darkgray", position=position_dodge(), linewidth=1) + 
+  geom_point(data=full_data, aes(y=log.intensity.norm, x=treatment, fill=treatment), size=1)+
+    theme_classic()+
+    ylab("log(Normalized Pool Size)")+
+    xlab("Time")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    ); mcap_plot2
+
+ggsave(mcap_plot2, filename="Mcap2021/Figures/Metabolomics/timeseries_validation/poolsize_glycolysis_mcap.jpg", width=5, height=5)
+```
+
+There is no strong temporal signal of accumulation or depletion in photosynthates over a 24 hour incubation. There may be a slight decrease in glucose and glycolysis after 6 hours. There is a slight increase in glycolysis intermediates and products from 1-6 hours. These results suggest that 3-6 hour time window captures stable metabolite pools and reaches the peak of metabolism of photosynthate activity. 
+
+# How does label enrichment of key metabolites change over time in Montipora capitata larvae?
+
+Subset to Montipora capitata larvae. 
+```{r}
+mcap_enrich<-enrichment%>%
+  filter(species=="Mcap")
+```
+
+Set levels of treatment. 
+```{r}
+mcap_enrich<-mcap_enrich%>%
+  mutate(treatment=factor(treatment, levels=c("1hr", "3hr", "6hr", "12hr", "24hr")))
+```
+
+Plot enrichment in descending order by isotope treatment. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+#make summary table
+enrich_plotting<-plyr::ddply(mcap_enrich, c("treatment", "Compound"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+enrich_plotting<-enrich_plotting%>%arrange(Compound)
+```
+
+```{r}
+mcap_plot3<-enrich_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=treatment, group=treatment)) + 
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_point(data=mcap_enrich, aes(y=enrichment, x=reorder(Compound, -enrichment), fill=treatment), size=1)+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );mcap_plot3
+```
+
+As expected, photosynthate and metabolic intermediates of photosynthate metabolism are the most labeled, including amino acids, glucose, F6P, and G6P. Host synthesize compounds like Montiporic acids, uric acid, and creatine are not labeled.  
+
+Run a loop to plot each compound over the time series. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+compound_list<-c(levels(as.factor(mcap_enrich$Compound)))  
+
+enrich_plotting<-plyr::ddply(mcap_enrich, c("treatment", "Compound"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(enrich_plotting, Compound == compound)
+  full_data <- subset(mcap_enrich, Compound==compound)
+  
+  label.plot <-  ggplot(compound_data, aes(x = treatment, y = mean)) + 
+    geom_bar(stat="identity", aes(group=treatment), fill="white", color="darkgray", position=position_dodge(), linewidth=1) + 
+    geom_point(data=full_data, aes(y=enrichment, x=treatment, fill=treatment), size=1)+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("Enrichment")+
+    xlab("Time")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/timeseries_validation/enrichment_plots/", compound, ".jpeg"), plot=label.plot, width=4, height=4, units="in")
+
+}
+```
+
+Next look at specific compounds of interest - photosynthates and metabolic intermediates of photosynthates. 
+```{r}
+compound_list<-c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate") 
+
+enrich_plotting<-plyr::ddply(mcap_enrich, c("treatment", "Compound"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+full_data<-mcap_enrich%>%
+  filter(Compound %in% compound_list)
+
+mcap_plot4<-enrich_plotting%>%
+  filter(Compound %in% compound_list)%>%
+  
+    ggplot(aes(x = treatment, y = mean)) + 
+    facet_wrap(~Compound)+
+    geom_bar(stat="identity", aes(group=treatment), fill="white", position=position_dodge(), linewidth=1, color="darkgray") + 
+  geom_point(data=full_data, aes(y=enrichment, x=treatment, fill=treatment), size=1)+
+    theme_classic()+
+    ylab("Enrichment")+
+    xlab("Time")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="none"
+    ); mcap_plot4
+
+ggsave(mcap_plot4, filename="Mcap2021/Figures/Metabolomics/timeseries_validation/enrichment_glycolysis_mcap.jpg", width=5, height=5)
+```
+
+Label incorporation clearly increases over the course of the time series as expected - as metabolism progresses more and more of the metabolites will incorporate C13 that is fixed through photosynthesis. 
+
+Specifically, label incorporation reaches a maximum in glucose and glycolysis intermediates at 6 hours. This reflects our conclusion from pool size data that the optimal incubation time is between 3-6 hours when photosynthate metabolism and translocation reaches its peak. 
+
+Glucose is highly labeled as expected due to translocation from the symbiont. Other compounds that increase over time but do not reach a peak (highest at 24 h) are glutamine and glutamate (nitrogen metabolism) and some amino acids. 
+
+We are aiming for 4-5 hour incubations. 
+
+# Explore metablite pool size in host vs symbiont in Pocillopora damicornis larvae  
+
+Subset to Pocillopora acuta larvae. 
+```{r}
+pacuta_data<-pool_size%>%
+  filter(species=="Pacuta")
+```
+
+Set levels of treatment. 
+```{r}
+pacuta_data<-pacuta_data%>%
+  droplevels()
+
+str(pacuta_data)
+```
+
+Plot pool size in descending order by isotope treatment faceted by fraction. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+#make summary table
+data_plotting<-plyr::ddply(pacuta_data, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+data_plotting<-data_plotting%>%arrange(Compound)
+```
+
+```{r}
+pacuta_plot1<-data_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=fraction, group=fraction)) + 
+  facet_wrap(~isotope)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_point(data=pacuta_data, aes(y=log.intensity.norm, x=reorder(Compound, -log.intensity.norm), fill=fraction), size=1)+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("log(Normalized Pool Size)")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pacuta_plot1
+```
+
+Run a loop to plot each compound over the time series. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+compound_list<-c(levels(as.factor(pacuta_data$Compound)))  
+
+pool_plotting<-plyr::ddply(pacuta_data, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(pool_plotting, Compound == compound)
+  full_data <- subset(pacuta_data, Compound == compound)
+  
+  label.plot <-  ggplot(compound_data, aes(x = isotope, y = mean)) + 
+    geom_bar(stat="identity", aes(group=fraction), fill="white", position=position_dodge(), linewidth=1, color="darkgray") + 
+    geom_point(data=full_data, aes(x=isotope, y=log.intensity.norm, group=interaction(isotope, fraction)), size=1, position=position_dodge(width=1))+
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("log(Normalized Pool Size)")+
+    xlab("Isotope")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="right"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/timeseries_validation/pacuta_fraction_poolsize_plots/", compound, ".jpeg"), plot=label.plot, width=4, height=4, units="in")
+
+}
+```
+
+Next look at specific compounds of interest - photosynthates and metabolic intermediates of photosynthates. 
+```{r}
+compound_list<-c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate") 
+
+pool_plotting<-plyr::ddply(pacuta_data, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+full_data<-pacuta_data%>%
+  filter(Compound %in% compound_list)
+
+pacuta_plot2<-pool_plotting%>%
+  filter(Compound %in% compound_list)%>%
+  
+    ggplot(aes(x = isotope, y = mean)) + 
+    facet_wrap(~Compound)+
+    geom_bar(stat="identity", aes(color=fraction, group=fraction), fill="white", position=position_dodge(), linewidth=1) +
+    geom_point(data=full_data, aes(x=isotope, y=log.intensity.norm, group=interaction(fraction, isotope)), position=position_dodge(width=1))+
+    theme_classic()+
+    ylab("log(Normalized Pool Size)")+
+    xlab("Isotope")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="right"
+    ); pacuta_plot2
+
+ggsave(pacuta_plot4, filename="Mcap2021/Figures/Metabolomics/timeseries_validation/poolsize_glycolysis_pacuta_fractions.jpg", width=6, height=5)
+```
+
+Glucose and metabolic intermediates are higher in the host. Pyruvate is higher in the symbiont fraction. The holobiont fraction ends to be between that of the host and symbiont. It may make the most sense to analyse only host and symbiont fractions. 
+
+# Explore metablite enrichment in host vs symbiont in Pocillopora damicornis larvae  
+
+Subset to Pocillopora acuta larvae. 
+```{r}
+pacuta_enrich<-enrichment%>%
+  filter(species=="Pacuta")
+```
+
+Set levels of treatment. 
+```{r}
+pacuta_enrich<-pacuta_enrich%>%
+  droplevels()
+
+str(pacuta_enrich)
+```
+
+Plot enrichment in descending order by isotope treatment faceted by fraction. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+#make summary table
+enrich_plotting<-plyr::ddply(pacuta_enrich, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+enrich_plotting<-enrich_plotting%>%arrange(Compound)
+```
+
+```{r}
+pacuta_plot3<-enrich_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=fraction, group=fraction)) + 
+  facet_wrap(~isotope)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_point(data=pacuta_enrich, aes(x=reorder(Compound, -enrichment), y=enrichment), position=position_dodge())+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pacuta_plot3
+```
+
+Run a loop to plot each compound over the time series. There are only 2 reps per time point, so we will not plot error bars. 
+
+```{r}
+compound_list<-c(levels(as.factor(pacuta_enrich$Compound)))  
+
+enrich_plotting<-plyr::ddply(pacuta_enrich, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+  
+# loop through each compound in the list and create a plot
+for (compound in compound_list) {
+  
+  # subset the fractions dataset for the current compound
+  compound_data <- subset(enrich_plotting, Compound == compound)
+  full_data <- subset(pacuta_enrich, Compound == compound)
+  
+  label.plot <-  ggplot(compound_data, aes(x = isotope, y = mean)) + 
+    geom_bar(stat="identity", aes(group=fraction), color="darkgray", fill="white", position=position_dodge(), linewidth=1) +
+    geom_point(data=full_data, aes(y=enrichment, x=isotope, group=interaction(fraction, isotope)), position=position_dodge(width=1)) +
+    theme_classic()+
+    ggtitle(compound)+
+    ylab("Enrichment")+
+    xlab("Isotope")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="right"
+    )
+  
+ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/timeseries_validation/pacuta_fraction_enrichment_plots/", compound, ".jpeg"), plot=label.plot, width=4, height=4, units="in")
+
+}
+```
+
+Next look at specific compounds of interest - photosynthates and metabolic intermediates of photosynthates. 
+```{r}
+compound_list<-c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate") 
+
+enrich_plotting<-plyr::ddply(pacuta_enrich, c("isotope", "Compound", "fraction"), summarise,
+                N    = length(enrichment[!is.na(enrichment)]),
+                mean = mean(enrichment, na.rm=TRUE),
+                sd   = sd(enrichment, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+full_data<-pacuta_enrich%>%
+  filter(Compound %in% compound_list)
+
+pacuta_plot4<-enrich_plotting%>%
+  filter(Compound %in% compound_list)%>%
+  
+    ggplot(aes(x = isotope, y = mean)) + 
+    facet_wrap(~Compound)+
+    geom_bar(stat="identity", aes(group=fraction, color=fraction), fill="white", position=position_dodge(), linewidth=1) +
+    geom_point(data=full_data, aes(x=isotope, y=enrichment, group=interaction(fraction, isotope)), position=position_dodge(width=1))+
+    theme_classic()+
+    ylab("Enrichment")+
+    xlab("Isotope")+
+    theme(
+      axis.text=element_text(color="black", size=12), 
+      axis.title=element_text(color="black", size=14, face="bold"), 
+      legend.text=element_text(color="black", size=12), 
+      legend.title=element_text(color="black", size=14, face="bold"), 
+      legend.position="right"
+    ); pacuta_plot4
+
+ggsave(pacuta_plot4, filename="Mcap2021/Figures/Metabolomics/timeseries_validation/enrichment_glycolysis_pacuta_fractions.jpg", width=6, height=5)
+```
+
+Labeling for these compounds is not present at 12C and is much less labeled in the dark, as expected. There is still some labeling in the dark, which may be carry over of photosynthesis from the light before the dark treatment started. As expected, there is higher labeling in host metabolic intermediates (F6P and G6P). Glucose has higher labeling in the symbiont, which is also expected. They symbiont is producing glucose through photosynthesis and translocating some of that glucose to the host. Because the glucose is made by the symbiont, we expect more label incorporation than the glucose pool in the host, where glucose may be generated through other metabolic pathways. 
