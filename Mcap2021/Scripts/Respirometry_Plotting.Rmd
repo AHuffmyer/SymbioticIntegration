@@ -93,6 +93,7 @@ boxplot(PRdata$GP.nmol.org.min)
 ```
 
 No apparent outliers in the data.  
+
 # **Analyze data**    
 
 ## Individual normalized data
