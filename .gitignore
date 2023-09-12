@@ -56,3 +56,8 @@ Mcap2021/Figures/Metabolomics/enrichment_vs_labeling
 Mcap2021/Figures/Metabolomics/label_prop_plots
 Mcap2021/Figures/Metabolomics/enrichment_plots
 Mcap2021/Figures/Metabolomics/abundance_plots
+Mcap2021/Figures/Metabolomics/timeseries_validation/enrichment_plots
+Mcap2021/Figures/Metabolomics/timeseries_validation/pool_size_plots
+Mcap2021/Figures/Metabolomics/timeseries_validation/pacuta_fraction_enrichment_plots
+Mcap2021/Figures/Metabolomics/timeseries_validation/pacuta_fraction_poolsize_plots
+
