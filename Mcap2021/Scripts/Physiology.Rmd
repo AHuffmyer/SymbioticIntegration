@@ -330,6 +330,8 @@ sym_model<-aov(cells.ugprotein~Treatment, data=sym_model_data)
 summary(sym_model)
 qqPlot(residuals(sym_model))
 leveneTest(residuals(sym_model)~Treatment, data=sym_model_data)
+
+t.test(sym_model_data$cells.ugprotein~sym_model_data$Treatment)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -1003,7 +1005,7 @@ wilcox.test(Carb.prot~Treatment, data=model_data)
 kruskal.test(Carb.prot~Treatment, data=model_data)
 t.test(Carb.prot~Treatment, data=model_data)
 ```
-There is no significant difference in host carbohydrates, but it is close! 
+There is no significant difference in host carbohydrates.
 
 Test for differences with an anova for holobiont carbohydrates.  
 

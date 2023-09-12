@@ -189,7 +189,7 @@ summary(model1)
 qqPlot(residuals(model1))
 ```
 
-Size is different between time points.  
+Size is different between treatments.  
 
 Run linear mixed effect model at the ending time points.  
 ```{r}
@@ -198,6 +198,8 @@ model_data<-size%>%
 
 model2<-aov(volume.mm3~treatment, data=model_data)
 summary(model2)
+
+t.test(model_data$volume.mm3~model_data$treatment)
 
 qqPlot(residuals(model2))
 ```
