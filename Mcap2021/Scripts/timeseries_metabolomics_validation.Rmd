@@ -243,7 +243,7 @@ mcap_plot1<-data_plotting%>%
   geom_point(data=mcap_data, aes(y=log.intensity.norm, x=reorder(Compound, -log.intensity.norm), fill=treatment), size=1)+
   theme_classic()+
   xlab("Metabolites")+
-  ylab("log(Normalized Pool Size)")+
+  ylab("Pool Size")+
   theme(
     legend.position="right", 
     panel.border=element_rect(colour="black", fill=NA, linewidth=1),
@@ -281,7 +281,7 @@ for (compound in compound_list) {
     geom_point(data=full_data, aes(y=log.intensity.norm, x=treatment, fill=treatment), size=1)+
     theme_classic()+
     ggtitle(compound)+
-    ylab("log(Normalized Pool Size)")+
+    ylab("Pool Size")+
     xlab("Time")+
     theme(
       axis.text=element_text(color="black", size=12), 
@@ -318,7 +318,7 @@ mcap_plot2<-pool_plotting%>%
     geom_bar(stat="identity", aes(group=treatment), fill="white", color="darkgray", position=position_dodge(), linewidth=1) + 
   geom_point(data=full_data, aes(y=log.intensity.norm, x=treatment, fill=treatment), size=1)+
     theme_classic()+
-    ylab("log(Normalized Pool Size)")+
+    ylab("Pool Size")+
     xlab("Time")+
     theme(
       axis.text=element_text(color="black", size=12), 
@@ -504,7 +504,7 @@ pacuta_plot1<-data_plotting%>%
   geom_point(data=pacuta_data, aes(y=log.intensity.norm, x=reorder(Compound, -log.intensity.norm), fill=fraction), size=1)+
   theme_classic()+
   xlab("Metabolites")+
-  ylab("log(Normalized Pool Size)")+
+  ylab("Pool Size")+
   theme(
     legend.position="right", 
     panel.border=element_rect(colour="black", fill=NA, linewidth=1),
@@ -540,7 +540,7 @@ for (compound in compound_list) {
     geom_point(data=full_data, aes(x=isotope, y=log.intensity.norm, group=interaction(isotope, fraction)), size=1, position=position_dodge(width=1))+
     theme_classic()+
     ggtitle(compound)+
-    ylab("log(Normalized Pool Size)")+
+    ylab("Pool Size")+
     xlab("Isotope")+
     theme(
       axis.text=element_text(color="black", size=12), 
@@ -577,7 +577,7 @@ pacuta_plot2<-pool_plotting%>%
     geom_bar(stat="identity", aes(color=fraction, group=fraction), fill="white", position=position_dodge(), linewidth=1) +
     geom_point(data=full_data, aes(x=isotope, y=log.intensity.norm, group=interaction(fraction, isotope)), position=position_dodge(width=1))+
     theme_classic()+
-    ylab("log(Normalized Pool Size)")+
+    ylab("Pool Size")+
     xlab("Isotope")+
     theme(
       axis.text=element_text(color="black", size=12), 

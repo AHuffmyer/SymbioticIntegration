@@ -268,7 +268,6 @@ Run only as regular ANOVA.
 Pmodel2<-aov(P.nmol.mm3.min~Treatment*Temperature, data=PRdata)
 summary(Pmodel2)
 ```
-In this analysis, treatment is significant.  
 
 Check assumptions of model for residual normality and variance.  
 
