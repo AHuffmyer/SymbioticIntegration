@@ -163,7 +163,7 @@ Plot pool size in descending order by isotope treatment.
 
 ```{r}
 #make summary table
-data_plotting<-plyr::ddply(pool_size, c("isotope", "Compound"), summarise,
+data_plotting<-plyr::ddply(pool_size, c("isotope", "Compound", "treatment"), summarise,
                 N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
                 mean = mean(log.intensity.norm, na.rm=TRUE),
                 sd   = sd(log.intensity.norm, na.rm=TRUE),
@@ -179,13 +179,15 @@ metab_compounds_isotopes_acids<-data_plotting%>%
   filter(str_detect(Compound, "^Montiporic"))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
   theme_classic()+
   xlab("Metabolites")+
   ylab("log(Normalized Pool Size)")+
   theme(
-    legend.position="right", 
+    legend.position="none", 
     panel.border=element_rect(colour="black", fill=NA, linewidth=1),
     strip.text.x = element_text(size = 12, color = "black", face = "bold"),
     text = element_text(size = 16, color="black"), 
@@ -202,11 +204,13 @@ metab_compounds_isotopes<-data_plotting%>%
   filter(!str_detect(Compound, "^Montiporic"))%>%
   
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
   theme_classic()+
   xlab("Metabolites")+
   ylab("log(Normalized Pool Size)")+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
   theme(
     legend.position="right", 
     panel.border=element_rect(colour="black", fill=NA, linewidth=1),
@@ -223,7 +227,64 @@ Save plots.
 ```{r}
 poolsize_fig<-plot_grid(metab_compounds_isotopes_acids, metab_compounds_isotopes, nrow = 1, align = 'h', labels = c('A', 'B'), rel_widths=c(0.2, 1))
 
-ggsave("Mcap2021/Figures/Metabolomics/pool_size_compounds.jpg", plot=poolsize_fig, width=26, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/pool_size_compounds.jpg", plot=poolsize_fig, width=26, height=10)
+```
+
+Plot by temperature. 
+
+```{r}
+metab_compounds_temperature_acids<-data_plotting%>%
+  filter(str_detect(Compound, "^Montiporic"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=treatment, group=treatment)) + 
+  facet_wrap(~isotope, nrow=3)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), width=0, position=position_dodge(0.9))+
+  scale_fill_manual(values=c("blue", "red"))+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("log(Normalized Pool Size)")+
+  theme(
+    legend.position="none", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );metab_compounds_temperature_acids
+```
+It is interesting that there was higher production of Montiporic acids in the dark. 
+
+Plot remaining metabolites. 
+```{r}
+metab_compounds_temperature<-data_plotting%>%
+  filter(!str_detect(Compound, "^Montiporic"))%>%
+  
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=treatment, group=treatment)) + 
+  facet_wrap(~isotope, nrow=3)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  xlab("Metabolites")+
+  ylab("log(Normalized Pool Size)")+
+  scale_fill_manual(values=c("blue", "red"))+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );metab_compounds_temperature
+```
+
+Save plots. 
+```{r}
+poolsize_temp_fig<-plot_grid(metab_compounds_temperature_acids, metab_compounds_temperature, nrow = 1, align = 'h', labels = c('A', 'B'), rel_widths=c(0.2, 1))
+
+ggsave("Mcap2021/Figures/Metabolomics/pool_size_compounds_temperature.jpg", plot=poolsize_temp_fig, width=26, height=10)
 ```
 
 ### Run PCA 
@@ -239,36 +300,281 @@ pool_size_pca<-pool_size%>%
 Generate a scaled data frame. 
 
 ```{r}
-scaled.pca<-prcomp(pool_size_pca[c(6:95)],scale=TRUE, center=TRUE) 
+pool_size_pca_ambient<-pool_size_pca%>%
+  filter(treatment=="Ambient")
+
+scaled.pca.ambient<-prcomp(pool_size_pca_ambient[c(6:95)],scale=TRUE, center=TRUE) 
+
+pool_size_pca_high<-pool_size_pca%>%
+  filter(treatment=="High")
+
+scaled.pca.high<-prcomp(pool_size_pca_high[c(6:95)],scale=TRUE, center=TRUE) 
 ```
 
-Plot PCA by isotope treatment. 
+Plot PCA by isotope treatment for each temperature. 
 ```{r}
-pcaPlot1<-ggplot2::autoplot(scaled.pca, data=pool_size_pca, frame.colour="isotope", loadings=FALSE, colour="isotope", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=TRUE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+#ambient
+pcaPlot1<-ggplot2::autoplot(scaled.pca.ambient, data=pool_size_pca_ambient, frame.colour="isotope", loadings=FALSE, colour="isotope", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+  facet_wrap(~treatment)+
   theme_classic()+
-  scale_colour_manual(values=c("gray", "green", "blue"))+
-  scale_fill_manual(values=c("gray", "green", "blue"))+
+  scale_colour_manual(values=c("gray", "lightgreen", "darkblue"))+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
    theme(legend.text = element_text(size=18), 
-         legend.position="right",
+         legend.position="none",
         plot.background = element_blank(),
         legend.title = element_text(size=18, face="bold"), 
         axis.text = element_text(size=18), 
         axis.title = element_text(size=18,  face="bold"));pcaPlot1
 
-ggsave("Mcap2021/Figures/Metabolomics/pca_isotope.jpg", pcaPlot1, width=6, height=6)
+#high
+pcaPlot2<-ggplot2::autoplot(scaled.pca.high, data=pool_size_pca_high, frame.colour="isotope", loadings=FALSE, colour="isotope", loadings.label.colour="black", loadings.colour="black", loadings.label=FALSE, frame=FALSE, loadings.label.size=5, loadings.label.vjust=-1, size=5) + 
+  facet_wrap(~treatment)+
+  theme_classic()+
+  scale_colour_manual(values=c("gray", "lightgreen", "darkblue"))+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+   theme(legend.text = element_text(size=18), 
+         legend.position="none",
+        plot.background = element_blank(),
+        legend.title = element_text(size=18, face="bold"), 
+        axis.text = element_text(size=18), 
+        axis.title = element_text(size=18,  face="bold"));pcaPlot2
+
+pca_isotope_grid<-plot_grid(pcaPlot1, pcaPlot2, nrow=2, ncol=1)
+
+ggsave("Mcap2021/Figures/Metabolomics/pca_isotope.jpg", pca_isotope_grid, width=5, height=8)
 ```
 
-Run PERMANOVA. 
+Run PERMANOVA to test difference between C12 and C13 isotopes metabolite pool sizes. 
 ```{r}
 # scale data
-vegan <- scale(pool_size_pca[c(6:95)])
+pool_size_pca_12Cvs13C<-pool_size_pca%>%
+  filter(!isotope=="Dark-13C")
+
+vegan <- scale(pool_size_pca_12Cvs13C[c(6:95)])
 
 # PerMANOVA 
-permanova<-adonis2(vegan ~ isotope, data = pool_size_pca, method='eu')
+permanova<-adonis2(vegan ~ isotope*treatment, data = pool_size_pca_12Cvs13C, method='eu')
 permanova
 ```
+                  Df SumOfSqs      R2      F Pr(>F)    
+isotope            1   245.91 0.11880 3.4681  0.001 ***
+treatment          1   326.29 0.15763 4.6018  0.001 ***
+isotope:treatment  1    79.70 0.03850 1.1240  0.331    
+Residual          20  1418.10 0.68507                  
+Total             23  2070.00 1.00000  
 
-There is significant variation (0.001) in the PCA by isotope. 
+There is significant variation in the PCA by isotope but response to temperature is not affected by isotope - so we can make comparisons between C13 by treatment. 
+
+
+
+
+
+
+
+Plot metabolites of interest. 
+
+```{r}
+#make summary table
+pool_size_plotting<-plyr::ddply(pool_size, c("Compound", "isotope", "treatment"), summarise,
+                N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
+                mean = mean(log.intensity.norm, na.rm=TRUE),
+                sd   = sd(log.intensity.norm, na.rm=TRUE),
+                se   = sd / sqrt(N)
+)
+
+pool_size_plotting<-pool_size_plotting%>%arrange(Compound)#%>%filter(!isotope=="12C")
+```
+
+```{r}
+pool_photo_metabolites<-pool_size_plotting%>%
+  filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", ""))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  scale_x_discrete(limits=c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))+
+  xlab("")+
+  ylab("Pool Size")+
+  #ylim(0,0.25)+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pool_photo_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/poolsize_isotope_photosynthesis.jpg", plot=pool_photo_metabolites, width=5, height=8)
+```
+
+```{r}
+pool_ammonia_metabolites<-pool_size_plotting%>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  xlab("")+
+  ylab("Pool Size")+
+  #ylim(0,0.25)+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pool_ammonia_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/poolsize_isotope_ammonia.jpg", plot=pool_ammonia_metabolites, width=5, height=8)
+```
+
+```{r}
+pool_tca_metabolites<-pool_size_plotting%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  xlab("")+
+  ylab("Pool Size")+
+  #ylim(0,0.25)+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pool_tca_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/poolsize_isotope_tca.jpg", plot=pool_tca_metabolites, width=5, height=8)
+```
+
+Plot a stress metabolite - methionine sulfoxide. 
+```{r}
+pool_host_metabolites<-pool_size_plotting%>%
+  filter(Compound %in% c("Methionine sulfoxide"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  scale_x_discrete(labels=c("Methionine \nSulfoxide"))+
+  xlab("Metabolites")+
+  ylab("Pool Size")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );pool_host_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/poolsize_isotope_methioninesulfoxide.jpg", plot=pool_host_metabolites, width=3, height=5)
+```
+
+Calculate average difference in labeling between isotope for these key metabolites. "There was X% decrease in pool size in C12 vs C13 samples."
+```{r}
+#show for each compound 
+pool_size%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_diff_12vs13=((`13C`-`12C`)/`13C`)*100)%>%
+  mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)
+
+#show overall mean for target metabolites
+pool_size%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_change_12vs13=((`13C`-`12C`)/`13C`)*100)%>%
+  mutate(perc_change_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
+  ungroup()%>%
+  summarise(mean_12vs13=mean(perc_change_12vs13), 
+            mean_13vsdark=mean(perc_change_13vsdark))
+```
+
+Calculate average pool size for metabolites of interest and then all metabolites by isotope. 
+```{r}
+pool_size%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Methionine sulfoxide"))%>%
+  group_by(isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))
+
+#test difference in label by isotope for targets 
+test<-pool_size%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Methionine sulfoxide"))%>%
+  aov(log.intensity.norm~isotope*Compound, data=.)
+
+summary(test)
+emm<-emmeans(test, ~isotope | Compound)
+pairs(emm)
+
+pool_size%>%
+  group_by(isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))
+
+#test difference in label by isotope for all compounds 
+test2<-pool_size%>%
+
+  aov(log.intensity.norm~isotope*Compound, data=.)
+
+summary(test2)
+
+emm<-emmeans(test2, ~isotope | Compound)
+pairs(emm)
+```
+
+Isocitrate (P<0.001), citrate (P=0.010), succinate (P=0.034), and methionine sulfoxide (P<0.001)  were higher in C13 than C12. 
+
+Show mean percent difference for each of these metabolites. 
+```{r}
+#show overall mean for target metabolites
+pool_size%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "Isocitrate", "Succinate", "Methionine sulfoxide"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_change_12vs13=((`13C`-`12C`)/`13C`)*100)
+
+#show overall mean for target metabolites
+pool_size%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "Isocitrate", "Glutamate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_change_darkvs13=((`13C`-`Dark-13C`)/`13C`)*100)
+```
+
 
 ## PLS-DA and VIP analysis 
 
@@ -301,7 +607,7 @@ MyResult.plsda_C12vsC13 <- plsda(X_C12vsC13, Y_C12vsC13) # 1 Run the method
 plotIndiv(MyResult.plsda_C12vsC13)    # 2 Plot the samples
 plotVar(MyResult.plsda_C12vsC13, cutoff = 0.7)    
 
-treatment_cols<-c("gray", "green") 
+treatment_cols<-c("gray", "lightgreen") 
             
 pdf("Mcap2021/Figures/Metabolomics/PLSDA_C12vsC13.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda_C12vsC13, col=treatment_cols, ind.names = FALSE, legend=TRUE, legend.title = "Isotope - C12 vs C13 Samples", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
@@ -1319,7 +1625,7 @@ We now need to compare enrichment of metabolites between dark and light treatmen
 
 ```{r}
 #make summary table
-dark_plotting<-plyr::ddply(enrichment, c("Compound", "isotope"), summarise,
+dark_plotting<-plyr::ddply(enrichment, c("Compound", "isotope", "treatment"), summarise,
                 N    = length(enrichment[!is.na(enrichment)]),
                 mean = mean(enrichment, na.rm=TRUE),
                 sd   = sd(enrichment, na.rm=TRUE),
@@ -1334,6 +1640,7 @@ Plot enrichment for each metabolite.
 dark_all_metabolites<-dark_plotting%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
   theme_classic()+
@@ -1350,9 +1657,34 @@ dark_all_metabolites<-dark_plotting%>%
     axis.title = element_text(face="bold")
     );dark_all_metabolites
 
-ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_all.jpg", plot=dark_all_metabolites, width=26, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_all.jpg", plot=dark_all_metabolites, width=26, height=12)
 ```
 
+Plot by isotope with comparison by temprature. 
+
+```{r}
+dark_all_metabolites_temp<-dark_plotting%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=treatment, group=treatment)) + 
+  facet_wrap(~isotope, nrow=3)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=treatment), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("blue", "red"))+
+  xlab("Metabolites")+
+  ylab("Enrichment")+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 0.5, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_all_metabolites_temp
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_all_temp.jpg", plot=dark_all_metabolites_temp, width=26, height=12)
+```
 This shows that the metabolites originating from photosynthsis that we expect to have low label incorporation in the dark do have low label compared to light treatment. For example, glucose, F6P, G6P, and pyruvate have far lower labeling that the light treatment. 
 
 Plot just these metabolites. 
@@ -1361,6 +1693,7 @@ dark_photo_metabolites<-dark_plotting%>%
   filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", ""))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
   theme_classic()+
@@ -1379,7 +1712,7 @@ dark_photo_metabolites<-dark_plotting%>%
     axis.title = element_text(face="bold")
     );dark_photo_metabolites
 
-ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_photosynthesis.jpg", plot=dark_photo_metabolites, width=6, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_photosynthesis.jpg", plot=dark_photo_metabolites, width=5, height=8)
 ```
 
 ```{r}
@@ -1387,6 +1720,7 @@ dark_ammonia_metabolites<-dark_plotting%>%
   filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate"))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
   theme_classic()+
@@ -1405,25 +1739,53 @@ dark_ammonia_metabolites<-dark_plotting%>%
     axis.title = element_text(face="bold")
     );dark_ammonia_metabolites
 
-ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_ammonia.jpg", plot=dark_ammonia_metabolites, width=6, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_ammonia.jpg", plot=dark_ammonia_metabolites, width=5, height=8)
+```
+
+```{r}
+dark_tca_metabolites<-dark_plotting%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  xlab("")+
+  ylab("Enrichment")+
+  #ylim(0,0.25)+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_tca_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_tca.jpg", plot=dark_tca_metabolites, width=5, height=8)
 ```
 
 Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. 
 
 This is all good news - the metabolites we expect to be labeled through photosynthesis are indeed labeled only in the light. 
 
-There are some metabolites that are labeled in the dark still - including methionine sulfoxide, citrulline, uridine, tryptophan, UMP, L-argino-succinate, tyrosine, and inosine. This suggests that the labeled carbon in these compounds did not originate through photosynthesis and are instead host derived. 
+There are some metabolites that are highly labeled in the dark - including methionine sulfoxide, citrulline, uridine, tryptophan, UMP, L-argino-succinate, tyrosine, and inosine. This suggests that the labeled carbon in these compounds did not originate through photosynthesis and are instead host derived. 
 
 Plot these metabolites. 
 ```{r}
-dark_host_metabolites<-dark_plotting%>%
-  filter(Compound %in% c("Methionine sulfoxide", "Citrulline", "Uridine", "Tryptophan", "UMP", "L-arginino-succinate", "Tyrosine", "Inosine", "Ribitol", "Isocitrate", "Citrate"))%>%
+dark_ms_metabolites<-dark_plotting%>%
+  filter(Compound %in% c("Methionine sulfoxide"))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
   theme_classic()+
-  scale_fill_manual(values=c("green", "blue"))+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  scale_x_discrete(labels=c("Methionine \nSulfoxide"))+
   xlab("Metabolites")+
   ylab("Enrichment")+
   theme(
@@ -1432,14 +1794,70 @@ dark_host_metabolites<-dark_plotting%>%
     strip.text.x = element_text(size = 12, color = "black", face = "bold"),
     text = element_text(size = 16, color="black"), 
     axis.text.y = element_text(size=14, color="black"), 
-    axis.text.x = element_text(size=12, color="black", angle=90, vjust = 1, hjust=1), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
     axis.title = element_text(face="bold")
-    );dark_host_metabolites
+    );dark_ms_metabolites
 
-ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_host.jpg", plot=dark_host_metabolites, width=12, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_methioninesulfoxide.jpg", plot=dark_ms_metabolites, width=3, height=5)
+```
+
+Calculate average difference in labeling between isotope for these key metabolites. "There was X% decrease in labeling C12 vs C13 samples."
+```{r}
+#show for each compound 
+enrichment%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_diff_12vs13=((`13C`-`12C`)/`13C`)*100)%>%
+  mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)
+
+#show overall mean for target metabolites
+enrichment%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_change_12vs13=((`13C`-`12C`)/`13C`)*100)%>%
+  mutate(perc_change_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
+  ungroup()%>%
+  summarise(mean_12vs13=mean(perc_change_12vs13), 
+            mean_13vsdark=mean(perc_change_13vsdark))
+```
+
+Calculate average label for metabolites of interest and then all metabolites by isotope. 
+```{r}
+enrichment%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  group_by(isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
+
+#test difference in label by isotope for targets 
+test<-enrichment%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate"))%>%
+  aov(enrichment~isotope*Compound, data=.)
+
+summary(test)
+
+enrichment%>%
+  group_by(isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
+
+#test difference in label by isotope for all compounds 
+test<-enrichment%>%
+
+  aov(enrichment~isotope*Compound, data=.)
+
+summary(test)
 ```
 
 We will use these data to understand if the carbon in these compounds is host or symbiont derived.  
+
+We cannot run a PCA because the C12 samples have no variance (all 0's) for most metabolites. 
 
 ## PLSDA and VIP analysis 
 
