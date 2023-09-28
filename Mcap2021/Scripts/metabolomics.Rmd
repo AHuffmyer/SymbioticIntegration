@@ -977,6 +977,35 @@ C13_vip_abund_plot<-C13_vip_metabolites%>%
 ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_C13.jpg", C13_vip_abund_plot, width=11, height=6)
 ```
 
+View a table with mean and SE pool size values for these metabolites at each temperature. 
+
+```{r}
+C13_vip_metabolites_sum<-C13_vip_metabolites%>%
+  group_by(Compound, treatment)%>%
+  select(Compound, treatment, log.intensity.norm)%>%
+  summarise(mean=mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))%>%
+  pivot_longer(cols=mean:se, values_to="value")%>%
+  mutate(metric=paste(treatment, "_", name))%>%
+  select(Compound, value, metric)%>%
+  pivot_wider(names_from=metric, values_from=value)
+
+write.csv(C13_vip_metabolites_sum, file="Mcap2021/Output/Metabolomics/VIP_PoolSize_Means.csv")
+```
+
+Run an ANOVA for the effect of temperature and metabolite on pool size. 
+```{r}
+model<-pool_size%>%
+  filter(isotope=="13C")%>%
+  
+  aov(log.intensity.norm ~ treatment * Compound, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~ treatment|Compound)
+pairs(emm)
+
+```
+
 Next plot the difference between ambient and high at the treatment level. Negative indicates high is lower than ambient, positive indicates high is higher than ambient. 
 
 ```{r}
@@ -991,7 +1020,7 @@ C13_vip_diff_plot<-C13_vip_metabolites%>%
   ggplot(aes(x=reorder(Compound, -change), y=change, color=factor(ifelse(change>0,"Greater in High","Greater in Ambient")), group=Compound))+
   geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
   scale_color_manual(values=c("blue", "red"), name="Treatment")+
-  ylab("Rel. change in log(normalized pool size)")+
+  ylab("Rel. difference in pool size")+
   xlab("VIP Metabolite")+
   ggtitle("VIP Difference - C13")+
   theme_classic()+
@@ -1005,6 +1034,17 @@ C13_vip_diff_plot<-C13_vip_metabolites%>%
   );C13_vip_diff_plot
 
 ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.jpg", C13_vip_diff_plot, width=11, height=6)
+
+#view mean values for each metabolite
+C13_vip_diff_sum<-C13_vip_metabolites%>%
+  arrange(Compound)%>%
+  group_by(Compound, treatment)%>%
+  summarise(mean=mean(log.intensity.norm))%>%
+  group_by(Compound)%>%
+  summarise(change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  filter(change !=0)
+
+write.csv(C13_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_PoolSize_RelDiff.csv")
 ```
 
 I submitted the VIP list to metaboanalyst to conduct KEGG/class enrichment. These were the significantly enriched pathways in this VIP list. 
@@ -1305,7 +1345,7 @@ C12_vip_diff_plot<-C12_vip_metabolites%>%
   ggplot(aes(x=reorder(Compound, -change), y=change, color=factor(ifelse(change>0,"Greater in High","Greater in Ambient")), group=Compound))+
   geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
   scale_color_manual(values=c("blue", "red"), name="Treatment")+
-  ylab("Rel. change in log(normalized pool size)")+
+  ylab("Rel. difference in log(normalized pool size)")+
   xlab("VIP Metabolite")+
   ggtitle("VIP Difference - C12")+
   theme_classic()+
@@ -1829,6 +1869,16 @@ enrichment%>%
             mean_13vsdark=mean(perc_change_13vsdark))
 ```
 
+Export mean values for all metabolites in light, C12, and dark. 
+```{r}
+#show for each compound 
+all_dark<-enrichment%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/length(enrichment))
+
+write.csv(file="Mcap2021/Output/Metabolomics/dark_vs_light_all_metabolites.csv", all_dark)
+```
+
 Calculate average label for metabolites of interest and then all metabolites by isotope. 
 ```{r}
 enrichment%>%
@@ -1960,6 +2010,51 @@ enrich_vip_abund_plot<-enrich_vip_metabolites%>%
 ggsave("Mcap2021/Figures/Metabolomics/VIP_Abundance_Enrichment.jpg", enrich_vip_abund_plot, width=11, height=6)
 ```
 
+View a table with mean and SE enrichment values for these metabolites at each temperature. 
+```{r}
+enrich_vip_metabolites_sum<-enrich_vip_metabolites%>%
+  group_by(Compound, treatment)%>%
+  select(Compound, treatment, enrichment)%>%
+  summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
+  pivot_longer(cols=mean:se, values_to="value")%>%
+  mutate(metric=paste(treatment, "_", name))%>%
+  select(Compound, value, metric)%>%
+  pivot_wider(names_from=metric, values_from=value)
+
+write.csv(enrich_vip_metabolites_sum, file="Mcap2021/Output/Metabolomics/VIP_Enrichment_Means.csv")
+```
+
+View for all metabolites at each temperature (not just VIPs). 
+```{r}
+enrich_all_metabolites<-enrichment%>%
+  filter(isotope=="13C")
+
+enrich_all_metabolites_sum<-enrich_all_metabolites%>%
+  group_by(Compound, treatment)%>%
+  select(Compound, treatment, enrichment)%>%
+  summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
+  pivot_longer(cols=mean:se, values_to="value")%>%
+  mutate(metric=paste(treatment, "_", name))%>%
+  select(Compound, value, metric)%>%
+  pivot_wider(names_from=metric, values_from=value)
+
+write.csv(enrich_all_metabolites_sum, file="Mcap2021/Output/Metabolomics/All_Enrichment_Means.csv")
+```
+
+Run an ANOVA for the effect of temperature and metabolite on enrichment. 
+```{r}
+model<-enrichment%>%
+  filter(isotope=="13C")%>%
+  
+  aov(enrichment ~ treatment * Compound, data=.)
+
+summary(model)
+
+emm<-emmeans(model, ~ treatment|Compound)
+pairs(emm)
+
+```
+
 Next plot the difference between ambient and high at the treatment level. Negative indicates high is less enriched than ambient, positive indicates high is more enriched than ambient. 
 
 ```{r}
@@ -1974,7 +2069,7 @@ enrich_vip_diff_plot<-enrich_vip_metabolites%>%
   ggplot(aes(x=reorder(Compound, -change), y=change, color=factor(ifelse(change>0,"More Enriched in High","More Enriched in Ambient")), group=Compound))+
   geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
   scale_color_manual(values=c("blue", "red"), name="Treatment")+
-  ylab("Rel. change in enrichment")+
+  ylab("Rel. difference in enrichment")+
   xlab("VIP Metabolite")+
   ggtitle("VIP Difference - C13 Enrichment")+
   theme_classic()+
@@ -1988,6 +2083,17 @@ enrich_vip_diff_plot<-enrich_vip_metabolites%>%
   );enrich_vip_diff_plot
 
 ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.jpg", enrich_vip_diff_plot, width=11, height=6)
+
+#export means
+enrich_vip_diff_sum<-enrich_vip_metabolites%>%
+  arrange(Compound)%>%
+  group_by(Compound, treatment)%>%
+  summarise(mean=mean(enrichment))%>%
+  group_by(Compound)%>%
+  summarise(change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  filter(change !=0)
+
+write.csv(enrich_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_Enrichment_RelDiff.csv")
 ```
 
 I submitted the VIP list to metaboanalyst to conduct KEGG/class enrichment. These were the significantly enriched pathways in this VIP list. 
@@ -2623,7 +2729,7 @@ label_vip_diff_plot<-label_vip_metabolites%>%
   ggplot(aes(x=reorder(Compound, -change), y=change, color=factor(ifelse(change>0,"Higher Labeling in High","Higher Labeling in Ambient")), group=Compound))+
   geom_bar(stat="identity",position=position_jitterdodge(0.2), fill="white")+
   scale_color_manual(values=c("blue", "red"), name="Treatment")+
-  ylab("Rel. change in labeling")+
+  ylab("Rel. difference in labeling")+
   xlab("VIP Metabolite")+
   ggtitle("VIP Difference - C13 Labeling")+
   theme_classic()+
@@ -2809,9 +2915,8 @@ compound_list<-levels(fraction_position$Compound)
 #there are 77 compounds we will analyze that have some labeling incorporation
 ```
 
-Run linear model in a loop. Run the model to look at positions >0 (looking at difference in label positions since 0 is unlabeled).  
+Run linear model in a loop. Run the model to look at labeled number of carbons for labeled metabolites (Position > 0). 
 
-We need to revise this to look at position as a factor, but we have a problem with the number of positions being higher than the number of observations (6). 
 ```{r}
 #Write a script to run a loop for each compound in compound_list to run a linear mixed effect model with sample as a random intercept and treatment and Position as main effects and output the results to a table 
 
@@ -2872,6 +2977,58 @@ Run a full model to show the posthoc effects for a metabolite of interest.
 ```{r}
 model <- fractions%>%
     filter(Compound=="Glucose")%>%
+    filter(isotope=="13C")%>%
+    filter(Position>0)%>%
+    mutate(Position=as.factor(Position))%>%
+    
+    aov(label ~ treatment * Position, data = .)
+
+emm<-emmeans(model, ~ treatment | Position)
+pairs(emm)
+```
+
+```{r}
+model <- fractions%>%
+    filter(Compound=="Aconitate")%>%
+    filter(isotope=="13C")%>%
+    filter(Position>0)%>%
+    mutate(Position=as.factor(Position))%>%
+    
+    aov(label ~ treatment * Position, data = .)
+
+emm<-emmeans(model, ~ treatment | Position)
+pairs(emm)
+```
+
+```{r}
+model <- fractions%>%
+    filter(Compound=="Glucose-6-phosphate")%>%
+    filter(isotope=="13C")%>%
+    filter(Position>0)%>%
+    mutate(Position=as.factor(Position))%>%
+    
+    aov(label ~ treatment * Position, data = .)
+
+emm<-emmeans(model, ~ treatment | Position)
+pairs(emm)
+```
+
+```{r}
+model <- fractions%>%
+    filter(Compound=="Fructose-6-phosphate")%>%
+    filter(isotope=="13C")%>%
+    filter(Position>0)%>%
+    mutate(Position=as.factor(Position))%>%
+    
+    aov(label ~ treatment * Position, data = .)
+
+emm<-emmeans(model, ~ treatment | Position)
+pairs(emm)
+```
+
+```{r}
+model <- fractions%>%
+    filter(Compound=="Pyruvate")%>%
     filter(isotope=="13C")%>%
     filter(Position>0)%>%
     mutate(Position=as.factor(Position))%>%
@@ -3019,6 +3176,13 @@ glucose.position.plot <- position_plotting %>%
     );glucose.position.plot
 
 ggsave(filename="Mcap2021/Figures/Metabolomics/glucose_enrichment_position.jpeg", plot=glucose.position.plot, width=6, height=4, units="in")
+
+#view means
+position_plotting %>%
+    filter(isotope=="13C")%>%
+    #filter(!Position==0)%>%
+    filter(Compound=="Glucose")%>%
+    arrange(Position)
 ```
 
 Plot instead as a smooth line. 
