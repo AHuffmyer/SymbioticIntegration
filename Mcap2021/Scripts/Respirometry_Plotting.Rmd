@@ -48,7 +48,6 @@ library('emmeans')
 library('multcomp')
 ```
 
-
 # **Data visualization and manipulation**  
 
 Load data from LoLinR.    
@@ -67,32 +66,33 @@ PRdata$Plate<-as.factor(PRdata$Plate)
 PRdata$Run<-as.factor(PRdata$Run)
 ```
 
-Calculate a P:R ratio using gross photosynthesis.  
-```{r, warning=FALSE, message=FALSE}
-PRdata$ratio<-abs(PRdata$GP.nmol.org.min)/abs(PRdata$R.nmol.org.min) #calculate ratio with absolute values
-#remove outliers detected by values of P:R ratio data
-boxplot(PRdata$ratio)
-PRdata<-PRdata%>%filter(ratio < 5)
-boxplot(PRdata$ratio)
-```
-
-Look for outliers in the data.  
-
 ```{r}
-boxplot(PRdata$R.nmol.org.min)
-#PRdata<-PRdata%>%filter(R.nmol.org.min < 10)
-#boxplot(PRdata$R.nmol.org.min)
+hist(PRdata$R.nmol.org.min)
 
-boxplot(PRdata$P.nmol.org.min)
-#PRdata<-PRdata%>%filter(P.nmol.org.min < 10)
-#boxplot(PRdata$P.nmol.org.min)
-
-boxplot(PRdata$GP.nmol.org.min)
-#PRdata<-PRdata%>%filter(GP.nmol.org.min < 10)
-#boxplot(PRdata$GP.nmol.org.min)
+hist(PRdata$GP.nmol.org.min)
 ```
 
-No apparent outliers in the data.  
+If gross photosynthesis is <0, substitute with 0. If respiration is >0, substitute with 0. 
+```{r}
+PRdata<-PRdata%>%
+  mutate(R.nmol.org.min=if_else(R.nmol.org.min>=0, 0, R.nmol.org.min))%>%
+  mutate(GP.nmol.org.min=if_else(GP.nmol.org.min<=0, 0, GP.nmol.org.min))%>%
+  mutate(P.nmol.org.min=if_else(P.nmol.org.min<=0, 0, P.nmol.org.min))
+```
+
+Calculate a P:R ratio using gross photosynthesis and inverse values of respiration.  
+```{r, warning=FALSE, message=FALSE}
+PRdata$ratio<-PRdata$GP.nmol.org.min/(PRdata$R.nmol.org.min*-1) #calculate ratio with positive values
+boxplot(PRdata$ratio)
+```
+
+We will need to remove the outlier at 0 and the outliers above 4.
+```{r}
+PRdata<-PRdata%>%
+  mutate(ratio=if_else(ratio>4, NA, ratio))%>%
+  mutate(ratio=if_else(ratio<0.1, NA, ratio))
+```
+
 
 # **Analyze data**    
 
@@ -100,94 +100,97 @@ No apparent outliers in the data.
 
 ### Respiration     
 
-Build linear mixed effect model and examine for Respiration.      
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Rmodel1<-lmer(R.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(Rmodel1, type="II") 
-summary(Rmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-Rmodel2<-aov(R.nmol.org.min~Treatment*Temperature, data=PRdata)
+Rmodel2<-PRdata%>%
+  filter(!is.na(R.nmol.org.min))%>%
+  
+  aov(R.nmol.org.min~Treatment*Temperature, data=.)
+
 summary(Rmodel2)
 ```
-Same results.  
 
 Check assumptions of model for residual normality and variance. Passes assumptions.    
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(Rmodel2))
-leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
+
+PRdata%>%
+  filter(!is.na(R.nmol.org.min))%>%
+
+  leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=.)
 ```
 
 ### Net Photosynthesis   
 
-Build linear mixed effect model and examine for Photosynthesis       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-lmer(P.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(Pmodel1, type="II")
-summary(Pmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-Pmodel2<-aov(P.nmol.org.min~Treatment*Temperature, data=PRdata)
+Pmodel2<-PRdata%>%
+  filter(!is.na(P.nmol.org.min))%>%
+  
+  aov(P.nmol.org.min~Treatment*Temperature, data=.)
+
 summary(Pmodel2)
 ```
-In this analysis, treatment is significant.  
 
 Check assumptions of model for residual normality and variance.  
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(Pmodel2))
-leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
+
+PRdata%>%
+  filter(!is.na(P.nmol.org.min))%>%
+  
+  leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=.)
 ```
 
 ### Gross Photosynthesis  
 
-Build linear mixed effect model and examine for GP       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-lmer(GP.nmol.org.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(GPmodel1, type="II")
-summary(GPmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-GPmodel2<-aov(GP.nmol.org.min~Treatment*Temperature, data=PRdata)
+GPmodel2<-PRdata%>%
+  filter(!is.na(GP.nmol.org.min))%>%
+  
+  aov(GP.nmol.org.min~Treatment*Temperature, data=.)
+
 summary(GPmodel2)
 ```
-Same results.    
 
 Check assumptions of model for residual normality and variance. Passes.    
-
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(GPmodel2))
-leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
+
+PRdata%>%
+  filter(!is.na(GP.nmol.org.min))%>%
+  
+  leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=.)
 ```
 
 ### P:R    
  
-Build linear mixed effect model and examine for PR ratio       
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-lmer(ratio~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(PRmodel1, type="II")
-summary(PRmodel1)
+hist(PRdata$ratio)
 ```
 
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-PRmodel2<-aov(ratio~Treatment*Temperature, data=PRdata)
+PRmodel2<-PRdata%>%
+  filter(!is.na(ratio))%>%
+  
+  aov(ratio~Treatment*Temperature, data=.)
+
 summary(PRmodel2)
 ```
-Same results.   
 
 Check assumptions of model for residual normality and variance. Meets assumptions.  
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(PRmodel2))
-leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
+
+PRdata%>%
+  filter(!is.na(ratio))%>%
+  
+  leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=.)
 ```
 
 ### Generate summary tables of mean and SE for all variables  
@@ -198,14 +201,14 @@ Generate summary of all respiration data.
 summary<-PRdata%>%
   group_by(Temperature, Treatment)%>%
   summarise(N=length(R.nmol.org.min),
-            Mean_R=mean(R.nmol.org.min), 
-            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
-            Mean_P=mean(P.nmol.org.min), 
-            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
-            Mean_GP=mean(GP.nmol.org.min), 
-            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
-            Mean_PR=mean(ratio), 
-            SE_PR=sd(ratio)/sqrt(length(ratio)))
+            Mean_R=mean(R.nmol.org.min*-1, na.rm=TRUE), 
+            SE_R=sd(R.nmol.org.min, na.rm=TRUE)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min, na.rm=TRUE), 
+            SE_P=sd(P.nmol.org.min, na.rm=TRUE)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min, na.rm=TRUE), 
+            SE_GP=sd(GP.nmol.org.min, na.rm=TRUE)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio, na.rm=TRUE), 
+            SE_PR=sd(ratio, na.rm=TRUE)/sqrt(length(ratio)))
 
 summary%>%
   write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
@@ -228,24 +231,28 @@ PRdata<-PRdata%>%
   mutate(R.nmol.mm3.min=R.nmol.org.min/volume.mm3)%>%
   mutate(P.nmol.mm3.min=P.nmol.org.min/volume.mm3)%>%
   mutate(GP.nmol.mm3.min=GP.nmol.org.min/volume.mm3)%>%
-  mutate(ratio.size=abs(GP.nmol.mm3.min)/abs(R.nmol.mm3.min))
+  mutate(ratio.size=GP.nmol.mm3.min/(R.nmol.mm3.min*-1))
+```
+
+We will need to remove the outlier at 0 and the outliers above 4.
+```{r}
+PRdata<-PRdata%>%
+  mutate(ratio.size=if_else(ratio.size>4, NA, ratio.size))%>%
+  mutate(ratio.size=if_else(ratio.size<0.1, NA, ratio.size))
 ```
 
 ### Respiration     
 
-Build linear mixed effect model and examine for Respiration.      
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Rmodel1<-lmer(R.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(Rmodel1, type="II") 
-summary(Rmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-Rmodel2<-aov(R.nmol.mm3.min~Treatment*Temperature, data=PRdata)
+Rmodel2<-PRdata%>%
+  filter(!is.na(R.nmol.mm3.min))%>%
+  aov(R.nmol.mm3.min~Treatment*Temperature, data=.)
+
 summary(Rmodel2)
 ```
-Same results.  
+
+Significantly lower R when size normalized in larvae from high temperature. 
 
 Check assumptions of model for residual normality and variance. Passes assumptions.    
 
@@ -256,14 +263,7 @@ leveneTest(residuals(Rmodel2)~Treatment*Temperature, data=PRdata)
 
 ### Net Photosynthesis   
 
-Build linear mixed effect model and examine for Photosynthesis       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-Pmodel1<-lmer(P.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(Pmodel1, type="II")
-summary(Pmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
 Pmodel2<-aov(P.nmol.mm3.min~Treatment*Temperature, data=PRdata)
 summary(Pmodel2)
@@ -278,48 +278,38 @@ leveneTest(residuals(Pmodel2)~Treatment*Temperature, data=PRdata)
 
 ### Gross Photosynthesis  
 
-Build linear mixed effect model and examine for GP       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-GPmodel1<-lmer(GP.nmol.mm3.min~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run nested within day
-anova(GPmodel1, type="II")
-summary(GPmodel1)
-```
-
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
 GPmodel2<-aov(GP.nmol.mm3.min~Treatment*Temperature, data=PRdata)
 summary(GPmodel2)
 ```
-Same results.    
 
 Check assumptions of model for residual normality and variance. Passes.    
-
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(GPmodel2))
 leveneTest(residuals(GPmodel2)~Treatment*Temperature, data=PRdata)
 ```
 
 ### P:R    
- 
-Build linear mixed effect model and examine for PR ratio       
-```{r, results=TRUE, warning=FALSE, message=FALSE}
-PRmodel1<-lmer(ratio.size~Treatment*Temperature + (1|Run) + (1|Tank), data=PRdata) #run as random
-anova(PRmodel1, type="II")
-summary(PRmodel1)
-```
 
-Run only as regular ANOVA.  
+Run ANOVA.  
 ```{r}
-PRmodel2<-aov(ratio.size~Treatment*Temperature, data=PRdata)
+PRmodel2<-PRdata%>%
+  filter(!is.na(ratio.size))%>%
+  
+  aov(ratio.size~Treatment*Temperature, data=.)
+
 summary(PRmodel2)
 ```
-Same results.   
 
 Check assumptions of model for residual normality and variance. Meets assumptions.  
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
 qqPlot(residuals(PRmodel2))
-leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=PRdata)
+
+PRdata%>%
+  filter(!is.na(ratio.size))%>%
+  leveneTest(residuals(PRmodel2)~Treatment*Temperature, data=.)
 ```
 
 ### Generate summary tables of mean and SE for all variables  
@@ -330,14 +320,14 @@ Generate summary of all respiration data.
 summary<-PRdata%>%
   group_by(Temperature, Treatment)%>%
   summarise(N=length(R.nmol.org.min),
-            Mean_R=mean(R.nmol.org.min), 
-            SE_R=sd(R.nmol.org.min)/sqrt(length(R.nmol.org.min)),
-            Mean_P=mean(P.nmol.org.min), 
-            SE_P=sd(P.nmol.org.min)/sqrt(length(P.nmol.org.min)),
-            Mean_GP=mean(GP.nmol.org.min), 
-            SE_GP=sd(GP.nmol.org.min)/sqrt(length(GP.nmol.org.min)),
-            Mean_PR=mean(ratio), 
-            SE_PR=sd(ratio)/sqrt(length(ratio)))
+            Mean_R=mean(R.nmol.org.min*-1, na.rm=TRUE), 
+            SE_R=sd(R.nmol.org.min, na.rm=TRUE)/sqrt(length(R.nmol.org.min)),
+            Mean_P=mean(P.nmol.org.min, na.rm=TRUE), 
+            SE_P=sd(P.nmol.org.min, na.rm=TRUE)/sqrt(length(P.nmol.org.min)),
+            Mean_GP=mean(GP.nmol.org.min, na.rm=TRUE), 
+            SE_GP=sd(GP.nmol.org.min, na.rm=TRUE)/sqrt(length(GP.nmol.org.min)),
+            Mean_PR=mean(ratio, na.rm=TRUE), 
+            SE_PR=sd(ratio, na.rm=TRUE)/sqrt(length(ratio)))
 
 summary%>%
   write_csv(., "Mcap2021/Output/Respiration/mean_respiration.csv")
@@ -351,24 +341,23 @@ summary%>%
 
 Plot data as an interaction plot   
 ```{r}
-
 r_plot<-PRdata %>%
     group_by(Treatment, Temperature)%>%
-    dplyr::summarise(mean=mean(abs(R.nmol.org.min)), sd=sd(abs(R.nmol.org.min)), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
-    ggplot(., aes(x = as.factor(Temperature), y = abs(mean), group=interaction(Treatment, Temperature))) +
+    dplyr::summarise(mean=mean(R.nmol.org.min), sd=sd(R.nmol.org.min), N=length(R.nmol.org.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = mean*-1, group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
+    geom_errorbar(aes(ymin=(mean*-1)-se, ymax=(mean*-1)+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     #scale_y_continuous(limits=c(0.5, -0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(0, 0.05)+
-    geom_text(x=1.5, y=0.007, label="Treatment p=0.945", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.207", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.004, label="Interaction p=0.224", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.007, label="Treatment p=0.782", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.01, label="Temperature p=0.129", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.004, label="Interaction p=0.614", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -378,15 +367,13 @@ r_plot<-PRdata %>%
       legend.text=element_text(size=12)
       ); r_plot
 
-#ggsave("Mcap2021/Figures/Respiration/Respiration.png", r_plot, dpi=300, w=5, h=5, units="in")
 ```
 
 Plot data as a box plot   
 ```{r}
-
 r_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
-    ggplot(., aes(x = as.factor(Temperature), y = R.nmol.org.min, group=interaction(Treatment, Temperature))) +
+    ggplot(., aes(x = as.factor(Temperature), y = (-1*R.nmol.org.min), group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_boxplot(aes(color=Treatment, group=interaction(Treatment, Temperature)), outlier.size = 0, position = position_dodge(0.85), lwd=1) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=4, position = position_jitterdodge(0.3)) + 
@@ -394,6 +381,9 @@ r_plot_2<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
+  
+  #geom_label(aes(label=paste(Run, Chamber.ID)), position=position_dodge(0.3))+
+  
     #scale_y_continuous(limits=c(-0.03, 0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     theme_classic() + 
     theme(
@@ -403,8 +393,6 @@ r_plot_2<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); r_plot_2
-
-#ggsave("Mcap2021/Figures/Respiration/Respiration_box.png", r_plot_2, dpi=300, w=5, h=5, units="in")
 ```
 
 ### Photosynthesis (Net)  
@@ -423,9 +411,9 @@ p_plot<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Net P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
-    geom_text(x=1.5, y=0.007, label="Treatment p=0.035", color="black", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.271", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.004, label="Interaction p=0.432", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.007, label="Treatment p=0.097", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.01, label="Temperature p=0.339", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.004, label="Interaction p=0.678", color="darkgray", size=6)+
     ylim(0, 0.05) +
     theme_classic() + 
     theme(
@@ -440,7 +428,6 @@ p_plot<-PRdata %>%
 
 Plot data as a box plot   
 ```{r}
-
 p_plot_2<-PRdata %>%
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = P.nmol.org.min, group=interaction(Treatment, Temperature))) +
@@ -460,8 +447,6 @@ p_plot_2<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); p_plot_2
-
-#ggsave("Mcap2021/Figures/Respiration/NetPhotosynthesis_box.png", p_plot_2, dpi=300, w=5, h=5, units="in")
 ```
 
 ### Photosynthesis (Gross)  
@@ -481,9 +466,9 @@ gp_plot<-PRdata %>%
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Gross P (nmol ", O[2], " larva"^-1, "min"^-1, ")")))) +
     ylim(0, 0.05) +
-    geom_text(x=1.5, y=0.007, label="Treatment p=0.226", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.01, label="Temperature p=0.143", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.004, label="Interaction p=0.207", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.007, label="Treatment p=0.348", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.01, label="Temperature p=0.093", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.004, label="Interaction p=0.479", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -517,8 +502,6 @@ gp_plot_2<-PRdata %>%
       legend.title=element_text(face="bold", size=14), 
       legend.text=element_text(size=12)
       ); gp_plot_2
-
-#ggsave("Mcap2021/Figures/Respiration/GrossPhotosynthesis_box.png", gp_plot_2, dpi=300, w=5, h=5, units="in")
 ```
 
 ### P:R Ratio  
@@ -526,8 +509,9 @@ gp_plot_2<-PRdata %>%
 Plot data as an interaction plot     
 ```{r}
 pr_plot<-PRdata %>%
+  
     dplyr::group_by(Treatment, Temperature)%>%
-    dplyr::summarise(mean=mean(ratio), sd=sd(ratio), N=length(ratio), se=sd/sqrt(N))%>%
+    dplyr::summarise(mean=mean(ratio, na.rm=TRUE), sd=sd(ratio, na.rm=TRUE), N=length(ratio), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
@@ -539,9 +523,9 @@ pr_plot<-PRdata %>%
     ylab(expression(bold(paste("P:R")))) +
     #scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(1, 3) +
-    geom_text(x=1.5, y=1.28, label="Treatment p=0.051", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1.4, label="Temperature p=0.540", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1.15, label="Interaction p=0.525", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.28, label="Treatment p=0.054", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.4, label="Temperature p=0.484", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.15, label="Interaction p=0.926", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -557,6 +541,7 @@ Plot data as a box plot
 ```{r}
 
 pr_plot_2<-PRdata %>%
+
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = ratio, group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
@@ -576,7 +561,6 @@ pr_plot_2<-PRdata %>%
       legend.text=element_text(size=12)
       ); pr_plot_2
 
-#ggsave("Mcap2021/Figures/Respiration/PRratio_box.png", pr_plot_2, dpi=300, w=5, h=5, units="in")
 ```
 
 
@@ -596,21 +580,21 @@ Plot data as an interaction plot
 ```{r}
 r_plot_size<-PRdata %>%
     group_by(Treatment, Temperature)%>%
-    dplyr::summarise(mean=mean(abs(R.nmol.mm3.min)), sd=sd(abs(R.nmol.mm3.min)), N=length(R.nmol.mm3.min), se=sd/sqrt(N))%>%
-    ggplot(., aes(x = as.factor(Temperature), y = abs(mean), group=interaction(Treatment, Temperature))) +
+    dplyr::summarise(mean=mean(R.nmol.mm3.min, na.rm=TRUE), sd=sd(R.nmol.mm3.min, na.rm=TRUE), N=length(R.nmol.mm3.min), se=sd/sqrt(N))%>%
+    ggplot(., aes(x = as.factor(Temperature), y = (-1*mean), group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
     geom_point(aes(fill=Treatment, group=interaction(Treatment, Temperature)), pch = 21, size=6, position = position_dodge(0.2)) + 
-    geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
+    geom_errorbar(aes(ymin=(-1*mean)-se, ymax=(-1*mean)+se, group=interaction(Treatment, Temperature)), width=0, linetype="solid", position=position_dodge(0.2), size=1.3, color="black")+
     xlab("Temperature") + 
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     #scale_y_continuous(limits=c(0.5, -0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(0, 0.95)+
-    geom_text(x=1.5, y=0.10, label="Treatment p=0.410", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.00, label="Temperature p=0.189", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.05, label="Interaction p=0.202", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.10, label="Treatment p=0.034", color="black", size=6)+
+    geom_text(x=1.5, y=0.00, label="Temperature p=0.120", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.05, label="Interaction p=0.519", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -635,6 +619,7 @@ r_plot_size_2<-PRdata %>%
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("R (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     #scale_y_continuous(limits=c(-0.03, 0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
+    #geom_label(aes(label=paste(Run, Chamber.ID)), position=position_dodge(0.3))+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -661,9 +646,9 @@ p_plot_size<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Net P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
-    geom_text(x=1.5, y=0.1, label="Treatment p=0.310", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.00, label="Temperature p=0.261", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.05, label="Interaction p=0.407", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.1, label="Treatment p=0.620", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.00, label="Temperature p=0.334", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.05, label="Interaction p=0.625", color="darkgray", size=6)+
     ylim(0, 0.95) +
     theme_classic() + 
     theme(
@@ -716,9 +701,9 @@ gp_size_plot<-PRdata %>%
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Gross P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     ylim(0, 2) +
-    geom_text(x=1.5, y=0.24, label="Treatment p=0.994", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.0, label="Temperature p=0.131", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.12, label="Interaction p=0.186", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.24, label="Treatment p=0.133", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.0, label="Temperature p=0.089", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.12, label="Interaction p=0.398", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -758,8 +743,9 @@ gp_plot_size_2<-PRdata %>%
 Plot data as an interaction plot     
 ```{r}
 pr_size_plot<-PRdata %>%
+
     dplyr::group_by(Treatment, Temperature)%>%
-    dplyr::summarise(mean=mean(ratio.size), sd=sd(ratio.size), N=length(ratio.size), se=sd/sqrt(N))%>%
+    dplyr::summarise(mean=mean(ratio.size, na.rm=TRUE), sd=sd(ratio.size, na.rm=TRUE), N=length(ratio.size), se=sd/sqrt(N))%>%
     ggplot(., aes(x = as.factor(Temperature), y = mean, group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=1, linetype="dashed", color="black", size=0.75)+
     geom_line(position=position_dodge(0.2), size=1.3, aes(color=Treatment, group=Treatment)) +
@@ -771,9 +757,9 @@ pr_size_plot<-PRdata %>%
     ylab(expression(bold(paste("P:R")))) +
     #scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(1, 2.8) +
-    geom_text(x=1.5, y=1.1, label="Treatment p=0.051", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1.2, label="Temperature p=0.540", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1, label="Interaction p=0.525", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.1, label="Treatment p=0.054", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.2, label="Temperature p=0.484", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1, label="Interaction p=0.926", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -788,6 +774,7 @@ pr_size_plot<-PRdata %>%
 Plot data as a box plot   
 ```{r}
 pr_plot_size_2<-PRdata %>%
+
     group_by(Treatment, Temperature)%>%
     ggplot(., aes(x = as.factor(Temperature), y = ratio.size, group=interaction(Treatment, Temperature))) +
     #geom_hline(yintercept=0, linetype="dashed", color="black", size=0.75)+

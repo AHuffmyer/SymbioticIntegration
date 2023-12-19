@@ -13,6 +13,11 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+
+REVISE THIS CODE TO MAKE ACCURATE START/END TIMES 
+
+
+
 ## Setup  
 
 Set up workspace, set options, and load required packages.    
@@ -101,6 +106,30 @@ starttimes<-read.csv("Mcap2021/Data/Respiration/starttimes.csv") #read in file o
 rtime<-starttimes$Rtime #list respiration start times. For respiration measurements, filter as > than this time
 ptime<-starttimes$Ptime #for photosynthesis, filter as < than this time
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Run loop to extract slopes from respiration data. Subset for respiration data by filtering time >= respiration start time. Start and end time datasheet has removed first 5 minutes of each run to allow for temp equilibration.  
 
@@ -214,16 +243,6 @@ oxygen<-full_join(oxygen, Photo.Rates) #add photosynthesis data
 colnames(oxygen)[colnames(oxygen) == 'Intercept'] <- 'Photo.Intercept' #rename to specify P
 colnames(oxygen)[colnames(oxygen) == 'umol.L.min'] <- 'P.umol.L.min' #rename to specify P
 ```
-
-Remove wells with double peaks or instances where slope extraction does not represent data.  
-
-```{r}
-oxygen$code<-paste(oxygen$Run, oxygen$Chamber.ID)
-remove<-c("2 A6", "4 D3")
-oxygen<-oxygen%>%
-  filter(!code %in% remove)
-```
-
 
 Account for volume and substract blank values. Average blank calculated for each run for P and R phases. Display mean blank value in order of R and P phases.    
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
