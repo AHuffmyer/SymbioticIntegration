@@ -262,8 +262,6 @@ PRdata%>%
   rename(mean=`mean(R.nmol.mm3.min * -1, na.rm = TRUE)`)%>%
   pivot_wider(names_from=Treatment, values_from=mean)%>%
   mutate(perc_difference=((High-Ambient)/Ambient)*100)
-
-
 ```
 
 
