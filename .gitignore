@@ -42,8 +42,8 @@ vignettes/*.pdf
 .DS_Store
 
 #p and r output files
-Mcap2021/Output/Respiration/RespirationPlots/*.pdf
-Mcap2021/Output/Respiration/PhotosynthesisPlots/*.pdf
+Mcap2021/Output/Respiration/RespirationPlots/
+Mcap2021/Output/Respiration/PhotosynthesisPlots/
 
 #knit files
 *.html
