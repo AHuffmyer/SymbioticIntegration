@@ -108,30 +108,7 @@ ptime<-starttimes$Ptime #for photosynthesis, filter as < than this time
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Run loop to extract slopes from respiration data. Subset for respiration data by filtering time >= respiration start time. Start and end time datasheet has removed first 5 minutes of each run to allow for temp equilibration.  
+Run loop to extract slopes from respiration data. Subset for respiration data by filtering time >= respiration start time. 
 
 ```{r, results=FALSE, warning=FALSE, message=FALSE}
 for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
