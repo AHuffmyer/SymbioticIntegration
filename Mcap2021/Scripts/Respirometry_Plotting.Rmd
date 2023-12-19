@@ -254,6 +254,19 @@ summary(Rmodel2)
 
 Significantly lower R when size normalized in larvae from high temperature. 
 
+Calculate % change in R in high temperature larvae. 
+```{r}
+PRdata%>%
+  group_by(Treatment)%>%
+  summarise(mean(R.nmol.mm3.min*-1, na.rm=TRUE))%>%
+  rename(mean=`mean(R.nmol.mm3.min * -1, na.rm = TRUE)`)%>%
+  pivot_wider(names_from=Treatment, values_from=mean)%>%
+  mutate(perc_difference=((High-Ambient)/Ambient)*100)
+
+
+```
+
+
 Check assumptions of model for residual normality and variance. Passes assumptions.    
 
 ```{r, results=TRUE, warning=FALSE, message=FALSE}
