@@ -193,12 +193,18 @@ Ratio.Plot <- ratios%>%
   custom_theme; Ratio.Plot 
 ```
 
-Test for differences with an anova.  
+Test for differences with a t-test.  
 
 ```{r}
-model<-aov(ratio~Treatment, data=ratios)
-summary(model)
+model<-t.test(ratio~Treatment, data=ratios)
+model
+
+leveneTest(ratio~Treatment, data=ratios)
+qqPlot(ratios$ratio)
 ```
+Both normality and homogeneity of variance pass.   
+
+No significant difference in protein ratios by treatment.  
 
 No difference in host:holobiont protein ratios. Using protein data for normalization only. 
 
@@ -314,24 +320,22 @@ df_cells%>%
   dplyr::summarise(n=length(cells.ugprotein),
             Mean=format(round(mean(cells.ugprotein), 0), 0), 
             SE=format(round(sd(cells.ugprotein)/sqrt(length(cells.ugprotein)),0),0))%>%
-  kbl(caption="Descriptive statistics of Symbiodiniaceae cell densities")%>%
+  kbl(caption="Descriptive statistics of Symbiodiniaceae cell densities per ug protein")%>%
   kable_classic(full_width=FALSE, html_font="Arial")%>%
   row_spec(0, bold = TRUE) 
 ```
 
 ## Statistical analysis  
 
-Run ANOVA on cells per protein by treatment.    
+Run t-test on cells per protein by treatment.    
 ```{r}
 sym_model_data<-df_cells%>%
       droplevels()
 
-sym_model<-aov(cells.ugprotein~Treatment, data=sym_model_data)
-summary(sym_model)
-qqPlot(residuals(sym_model))
-leveneTest(residuals(sym_model)~Treatment, data=sym_model_data)
-
 t.test(sym_model_data$cells.ugprotein~sym_model_data$Treatment)
+
+qqPlot(sym_model_data$cells.ugprotein)
+leveneTest(cells.ugprotein~Treatment, data=sym_model_data)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -346,14 +350,12 @@ sym_plot <- df_cells%>%
   ggplot(aes(x=Treatment, y=cells.ugprotein)) +
   geom_boxplot(aes(colour=Treatment), width=.5, outlier.shape= NA, position = position_dodge(width = 0.4)) +
   geom_point(aes(fill=Treatment), pch = 21, position=position_jitterdodge(dodge.width=0.4), size=4, alpha=0.5) +
-  ylim(0,850)+
+  ylim(0,900)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   geom_text(x=1.5, y=0, label="p=0.250", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Cell Density (cells ug protein"^-1, ")"))))+
   custom_theme; sym_plot 
-
-#ggsave("Mcap2021/Figures/symbiont_density.png", sym_plot, width=4, height=5)
 ```
 
 # Chlorophyll 
@@ -559,12 +561,12 @@ chlA_protein_plot<-df_chl %>%
 
 ```
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chla_prot_model<-aov(chlA.ug.protein.ug~Treatment, data=df_chl)
-summary(chla_prot_model)
-qqPlot(residuals(chla_prot_model))
-leveneTest(residuals(chla_prot_model)~Treatment, data=df_chl)
+t.test(df_chl$chlA.ug.protein.ug~df_chl$Treatment)
+
+qqPlot(df_chl$chlA.ug.protein.ug)
+leveneTest(chlA.ug.protein.ug~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -593,12 +595,12 @@ chlC2_protein_plot<-df_chl %>%
 
 ```
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chlc2_prot_model<-aov(chlC2.ug.protein.ug~Treatment, data=df_chl)
-summary(chlc2_prot_model)
-car::qqPlot(residuals(chlc2_prot_model))
-car::leveneTest(residuals(chlc2_prot_model)~Treatment, data=df_chl)
+t.test(df_chl$chlC2.ug.protein.ug~df_chl$Treatment)
+
+qqPlot(df_chl$chlC2.ug.protein.ug)
+leveneTest(chlC2.ug.protein.ug~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -626,12 +628,12 @@ chl.total_protein_plot<-df_chl %>%
 
 ```
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chl.total_prot_model<-aov(total.chl.ug.protein.ug~Treatment, data=df_chl)
-summary(chl.total_prot_model)
-car::qqPlot(residuals(chl.total_prot_model))
-car::leveneTest(residuals(chl.total_prot_model)~Treatment, data=df_chl)
+t.test(df_chl$total.chl.ug.protein.ug~df_chl$Treatment)
+
+qqPlot(df_chl$total.chl.ug.protein.ug)
+leveneTest(total.chl.ug.protein.ug~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -649,11 +651,9 @@ chl_prot_plot <- df_chl%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,210)+
-  geom_text(x=1.5, y=0, label="p=0.371", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.368", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (ug ug protein"^-1, ")"))))+
   custom_theme; chl_prot_plot 
-
-#ggsave("Mcap2021/Figures/chl_protein.png", chl_prot_plot, width=4, height=5)
 ```
 
 ## Normalize to cell density  
@@ -705,12 +705,11 @@ chlA_cell_plot<-df_chl %>%
 
 ```
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chla_cell_model<-aov(chlA.ug.cell~Treatment, data=df_chl)
-summary(chla_cell_model)
-car::qqPlot(residuals(chla_cell_model))
-car::leveneTest(residuals(chla_cell_model)~Treatment, data=df_chl)
+t.test(chlA.ug.cell~Treatment, data=df_chl)
+qqPlot(df_chl$chlA.ug.cell)
+leveneTest(df_chl$chlA.ug.cell~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -737,12 +736,11 @@ chlC2_cell_plot<-df_chl %>%
 
 ```
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chlc2_cell_model<-aov(chlC2.ug.cell~Treatment, data=df_chl)
-summary(chlc2_cell_model)
-car::qqPlot(residuals(chlc2_cell_model))
-car::leveneTest(residuals(chlc2_cell_model)~Treatment, data=df_chl)
+t.test(chlC2.ug.cell~Treatment, data=df_chl)
+qqPlot(df_chl$chlC2.ug.cell)
+leveneTest(df_chl$chlC2.ug.cell~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -772,12 +770,11 @@ chl.total_cell_plot<-df_chl %>%
 
 ### Generate final plot of total chlorophyll per cell  
 
-Run ANOVA.    
+Run t-test.    
 ```{r}
-chl.total_cell_model<-aov(total.chl.ug.cell~Treatment, data=df_chl)
-summary(chl.total_cell_model)
-car::qqPlot(residuals(chl.total_cell_model))
-car::leveneTest(residuals(chl.total_cell_model)~Treatment, data=df_chl)
+t.test(total.chl.ug.cell~Treatment, data=df_chl)
+qqPlot(df_chl$total.chl.ug.cell)
+leveneTest(df_chl$total.chl.ug.cell~Treatment, data=df_chl)
 ```
 
 Both normality and homogeneity of variance pass.   
@@ -794,11 +791,9 @@ chl_cells_plot <- df_chl%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.55)+
-  geom_text(x=1.5, y=0, label="p=0.712", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.705", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (ug cell"^-1, ")"))))+
   custom_theme; chl_cells_plot 
-
-#ggsave("Mcap2021/Figures/chl_cells.png", chl_cells_plot, width=4, height=5)
 ```
 
 # Carbohydrates 
@@ -924,24 +919,22 @@ carb_ratio<-df_carbs%>%
   dplyr::summarise(mean_carbs=mean(Carb.mg))%>%
   spread(Fraction, mean_carbs)%>%
   mutate(ratio=Host/Holobiont)%>%
-  filter(ratio>0)
+  filter(ratio>0)%>%
+  filter(ratio<0.5) #remove outlier 
   
 ```
 
 ### Statistical tests 
 
-Test for differences with an anova.  
+Test for differences with a t test  
 
 ```{r}
-model<-aov(ratio~Treatment, data=carb_ratio)
-summary(model)
-
-wilcox.test(ratio~Treatment, data=carb_ratio)
-kruskal.test(ratio~Treatment, data=carb_ratio)
 t.test(ratio~Treatment, data=carb_ratio)
-```
 
-There is a slight but non-significant difference in Host:Holobiont ratios of carbohydrates at high temperature. There are more carbohydrates in the host fraction out of the total carbohydrates at high temperature. 
+qqPlot(carb_ratio$ratio)
+leveneTest(ratio~Treatment, data=carb_ratio)
+```
+No difference. Assumptions pass. 
 
 ### Plotting  
 
@@ -955,7 +948,7 @@ carb_ratio_plot <- carb_ratio%>%
   ylim(0,0.7)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
-  geom_text(x=1.5, y=0, label="p=0.108", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.104", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold("Host:Holobiont Carbohydrates"))) + #Axis titles
   custom_theme; carb_ratio_plot 
 ```
@@ -992,33 +985,29 @@ df_carbs<-df_carbs%>%
 
 ### Statistical tests  
 
-Test for differences with an anova for host carbohydrates.  
+Test for differences with a t test for host carbohydrates.  
 
 ```{r}
 model_data<-df_carbs%>%
   filter(Fraction=="Host")
 
-model<-aov(Carb.prot~Treatment, data=model_data)
-summary(model)
-
-wilcox.test(Carb.prot~Treatment, data=model_data)
-kruskal.test(Carb.prot~Treatment, data=model_data)
 t.test(Carb.prot~Treatment, data=model_data)
+
+qqPlot(model_data$Carb.prot)
+leveneTest(Carb.prot~Treatment, data=model_data)
 ```
 There is no significant difference in host carbohydrates.
 
-Test for differences with an anova for holobiont carbohydrates.  
+Test for differences with a t test for holobiont carbohydrates.  
 
 ```{r}
 model_data<-df_carbs%>%
   filter(Fraction=="Holobiont")
 
-model<-aov(Carb.prot~Treatment, data=model_data)
-summary(model)
-
-wilcox.test(Carb.prot~Treatment, data=model_data)
-kruskal.test(Carb.prot~Treatment, data=model_data)
 t.test(Carb.prot~Treatment, data=model_data)
+
+qqPlot(model_data$Carb.prot)
+leveneTest(Carb.prot~Treatment, data=model_data)
 ```
 There is no significant difference in holobiont carbohydrates. 
 
@@ -1049,7 +1038,7 @@ carb.host.prot <- df_carbs%>%
   ylim(0,8)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
-  geom_text(x=1.5, y=0, label="p=0.099", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.094", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (ug ug protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.host.prot 
 ```
@@ -1066,11 +1055,10 @@ carb.holobiont.prot <- df_carbs%>%
   ylim(0,17)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
-  geom_text(x=1.5, y=0, label="p=0.217", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.239", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carbohydrates (ug ug protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.holobiont.prot 
 ```
-
 
 ## Normalize to cell density  
 
@@ -1101,38 +1089,35 @@ df_carbs<-left_join(df_carbs, ratio_df)
 
 ### Statistical tests  
 
-Test for differences in host carbs per cell with an anova.  
+Test for differences in host carbs per cell with a t test.   
 
 ```{r}
 cells_data_model<-df_carbs%>%
   filter(!Sample.ID=="H")%>%
   filter(Fraction=="Host")
 
-model<-aov(carbs.cell~Treatment, data=cells_data_model)
-summary(model)
-
-wilcox.test(carbs.cell~Treatment, data=cells_data_model)
-kruskal.test(carbs.cell~Treatment, data=cells_data_model)
 t.test(carbs.cell~Treatment, data=cells_data_model)
+
+qqPlot(cells_data_model$carbs.cell)
+leveneTest(carbs.cell~Treatment, data=cells_data_model)
 ```
 
 There is no difference in host carbs per cell by treatment. 
 
-Test for differences in holobiont carbs per cell with an anova.  
+Test for differences in holobiont carbs per cell with a t test.   
 
 ```{r}
 cells_data_model<-df_carbs%>%
   filter(Fraction=="Holobiont")
 
-model<-aov(carbs.cell~Treatment, data=cells_data_model)
-summary(model)
-
-wilcox.test(carbs.cell~Treatment, data=cells_data_model)
-kruskal.test(carbs.cell~Treatment, data=cells_data_model)
 t.test(carbs.cell~Treatment, data=cells_data_model)
+wilcox.test(carbs.cell~Treatment, data=cells_data_model)
+
+qqPlot(cells_data_model$carbs.cell)
+leveneTest(carbs.cell~Treatment, data=cells_data_model)
 ```
 
-There is a difference in carbs in the holobiont when normalized to cell density. 
+There is no difference in carbs in the holobiont when normalized to cell density. 
 
 ### Plotting 
 
@@ -1163,11 +1148,10 @@ carbs.cell.holo <- df_carbs%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.04)+
-  geom_text(x=1.5, y=0, label="p=0.046", color="black", size=4)+
+  geom_text(x=1.5, y=0, label="p=0.169", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carbohydrates (ug cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.holo 
 ```
-
 
 
 # Correlations 
@@ -1242,6 +1226,89 @@ p
 
 ggsave(plot=p, "Mcap2021/Figures/Physiology_Corr_Matrix.pdf", width=15, height=10, unit="in", dpi=300)
 ```
+
+Generate specific correlations of interest. 
+
+Carbohydrates ~ Cell Density 
+```{r}
+plot(master$Host.carb.ug.prot.ug~master$cells.ugprotein)
+cor.test(master$Host.carb.ug.prot.ug,master$cells.ugprotein)
+
+plot(master$Holo.carb.ug.prot.ug~master$cells.ugprotein)
+cor.test(master$Holo.carb.ug.prot.ug,master$cells.ugprotein) #explore this one further
+
+plot(master$Host.carbs.ug.cell~master$cells.ugprotein)
+cor.test(master$Host.carbs.ug.cell,master$cells.ugprotein) #explore this further 
+
+plot(master$Holo.carbs.ug.cell~master$cells.ugprotein)
+cor.test(master$Holo.carbs.ug.cell,master$cells.ugprotein)
+```
+
+Carbohydrates ~ Chlorophyll 
+```{r}
+plot(master$Host.carb.ug.prot.ug~master$total.chl.ug.protein.ug)
+cor.test(master$Host.carb.ug.prot.ug,master$total.chl.ug.protein.ug)
+
+plot(master$Holo.carb.ug.prot.ug~master$total.chl.ug.protein.ug)
+cor.test(master$Holo.carb.ug.prot.ug,master$total.chl.ug.protein.ug)
+
+plot(master$Host.carbs.ug.cell~master$total.chl.ug.protein.ug)
+cor.test(master$Host.carbs.ug.cell,master$total.chl.ug.protein.ug) 
+
+plot(master$Holo.carbs.ug.cell~master$total.chl.ug.protein.ug)
+cor.test(master$Holo.carbs.ug.cell,master$total.chl.ug.protein.ug)
+
+plot(master$Host.carb.ug.prot.ug~master$total.chl.ug.cell)
+cor.test(master$Host.carb.ug.prot.ug,master$total.chl.ug.cell)
+
+plot(master$Holo.carb.ug.prot.ug~master$total.chl.ug.cell)
+cor.test(master$Holo.carb.ug.prot.ug,master$total.chl.ug.cell)
+
+plot(master$Host.carbs.ug.cell~master$total.chl.ug.cell)
+cor.test(master$Host.carbs.ug.cell,master$total.chl.ug.cell) 
+
+plot(master$Holo.carbs.ug.cell~master$total.chl.ug.cell)
+cor.test(master$Holo.carbs.ug.cell,master$total.chl.ug.cell)
+
+```
+No relationships with chlorophyll. Plot significant correlations between: 
+
+Holobiont carbs per protein ~ cells per protein 
+```{r}
+cor1<-master%>%
+  
+  ggplot(aes(y=Holo.carb.ug.prot.ug, x=cells.ugprotein, group=Treatment, colour=Treatment))+
+  
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)+
+  
+  scale_fill_manual(values=c("blue", "red")) +
+        scale_color_manual(values=c("blue", "red")) +
+        theme_classic()+
+        theme(text=element_text(size=14, face="bold"))+
+        theme(strip.text.x=element_text(face="bold", size=14)); cor1
+```
+This relationship is not significant when plotted as holobiont carbs per cell. Holobiont carbs are higher if there are more cells per unit protein. 
+
+Host carbs per cell ~ cells per protein 
+```{r}
+cor2<-master%>%
+  
+  ggplot(aes(y=Host.carbs.ug.cell, x=cells.ugprotein, group=Treatment, colour=Treatment))+
+  
+  geom_point()+
+  geom_smooth(aes(group=1), method="lm", se=FALSE, colour="black")+
+  
+  scale_fill_manual(values=c("blue", "red")) +
+  scale_color_manual(values=c("blue", "red")) +
+  
+  geom_text(x=500, y=0.02, label="r=0.636, p=0.001", colour="black")+
+  theme_classic()+
+  theme(text=element_text(size=14, face="bold"))+
+  theme(strip.text.x=element_text(face="bold", size=14)); cor2
+```
+This is just saying that carbs is not different in total and therefore there are fewer carbs per cell in larvae with more symbionts. 
+
 
 # Generate final figure 
 

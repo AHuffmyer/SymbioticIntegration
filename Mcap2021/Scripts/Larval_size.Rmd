@@ -181,7 +181,7 @@ size_plot_4<-size %>%
 
 # Linear models  
 
-Run anova model between time points.  
+Run anova model between time points and treatment.  
 ```{r}
 model1<-aov(volume.mm3~timepoint*treatment, data=size)
 
@@ -191,17 +191,15 @@ qqPlot(residuals(model1))
 
 Size is different between treatments.  
 
-Run linear mixed effect model at the ending time points.  
+Run linear mixed effect model at only the ending time points because time points are different.  
 ```{r}
 model_data<-size%>%
   filter(timepoint=="Sampling")
 
-model2<-aov(volume.mm3~treatment, data=model_data)
-summary(model2)
-
 t.test(model_data$volume.mm3~model_data$treatment)
 
-qqPlot(residuals(model2))
+qqPlot(model_data$volume.mm3)
+leveneTest(volume.mm3~treatment, data=model_data)
 ```
 
  
@@ -239,8 +237,8 @@ size_plot_full<-size %>%
     ylim(0,0.075)+
     xlab("Timepoint") + 
     ylab(expression(bold(paste("Larval Size (mm"^3, ")"))))+
-    geom_text(x=1.5, y=0.069, label="time p=0.070", color="darkgray", size=4)+
-    geom_text(x=1.5, y=0.066, label="treatment p=0.047", color="black", size=4)+
+    #geom_text(x=1.5, y=0.069, label="time p=0.070", color="darkgray", size=4)+
+    #geom_text(x=1.5, y=0.066, label="treatment p=0.047", color="black", size=4)+
   
   #baseline to ambient
     geom_segment(aes(x = 1, y = Baseline, xend = 2, yend = Ambient), colour="blue", data = segpoints, size=2, show.legend=FALSE) +
