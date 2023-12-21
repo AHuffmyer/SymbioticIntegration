@@ -932,11 +932,16 @@ VIP_list_plot_C13<-treatment_VIP_1 %>%
   geom_point() +
   ylab("Metabolite") +
   xlab("VIP Score") +
-  ggtitle("Treatment VIP - C13") +
+  ggtitle("Pool Size VIP - C13") +
   theme_bw() + theme(panel.border = element_rect(linetype = "solid", color = "black"), panel.grid.major = element_blank(), #Makes background theme white
                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"));VIP_list_plot_C13
 
 ggsave("Mcap2021/Figures/Metabolomics/VIP_List_C13.jpg", VIP_list_plot_C13, width=4, height=6)
+
+#save VIP values 
+treatment_VIP_1 %>%
+  arrange(VIP) %>%
+  write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_poolsize.csv")
 ```
 
 These lists represent VIPs that drive separation in treatment in the 13C samples.  
@@ -1808,7 +1813,33 @@ dark_tca_metabolites<-dark_plotting%>%
 ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_tca.jpg", plot=dark_tca_metabolites, width=5, height=8)
 ```
 
-Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. 
+```{r}
+dark_urea_metabolites<-dark_plotting%>%
+  filter(Compound %in% c("N-acetyl-glutamate", "Citrulline", "Aspartate", "L-arginino-succinate", "Arginine", "Ornithine", "Carbamoyl phosphate"))%>%
+         
+  ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
+  facet_wrap(~treatment, nrow=2)+
+  geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, group=isotope), width=0, position=position_dodge(0.9))+
+  theme_classic()+
+  scale_fill_manual(values=c("gray", "lightgreen", "darkblue"))+
+  xlab("")+
+  ylab("Enrichment")+
+  #ylim(0,0.25)+
+  theme(
+    legend.position="right", 
+    panel.border=element_rect(colour="black", fill=NA, linewidth=1),
+    strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+    text = element_text(size = 16, color="black"), 
+    axis.text.y = element_text(size=14, color="black"), 
+    axis.text.x = element_text(size=12, color="black", angle=45, vjust = 1, hjust=1), 
+    axis.title = element_text(face="bold")
+    );dark_urea_metabolites
+
+ggsave("Mcap2021/Figures/Metabolomics/enrichment_darkvslight_urea.jpg", plot=dark_urea_metabolites, width=8, height=8)
+```
+
+Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. Some of the urea cycle metabolites may be due to host uptake - look into this more. 
 
 This is all good news - the metabolites we expect to be labeled through photosynthesis are indeed labeled only in the light. 
 
@@ -1893,6 +1924,16 @@ test<-enrichment%>%
 
 summary(test)
 
+#run a test by temperature including citrulline for urea cycle
+test<-enrichment%>%
+  filter(Compound %in% c("Citrate", "a-ketoglutarate", "Aconitrate", "Isocitrate", "Succinate", "Malate", "Glutamate", "Glutamine", "a-ketoglutarate", "Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Citrulline"))%>%
+  aov(enrichment~isotope*Compound*treatment, data=.)
+
+summary(test)
+
+emm<-emmeans(test, ~isotope * treatment | Compound)
+pairs(emm)
+
 enrichment%>%
   group_by(isotope)%>%
   summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
@@ -1904,6 +1945,7 @@ test<-enrichment%>%
 
 summary(test)
 ```
+
 
 We will use these data to understand if the carbon in these compounds is host or symbiont derived.  
 
@@ -1970,6 +2012,11 @@ VIP_list_plot_enrich<-enrich_VIP_1 %>%
                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"));VIP_list_plot_enrich
 
 ggsave("Mcap2021/Figures/Metabolomics/VIP_List_enrichment.jpg", VIP_list_plot_enrich, width=4, height=6)
+
+#save VIP values 
+enrich_VIP_1 %>%
+  arrange(VIP) %>%
+  write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_enrichment.csv")
 ```
 
 These lists represent VIPs that drive separation in enrichment by treatment in the 13C samples.  
@@ -3149,7 +3196,7 @@ Glucose is particularly interesting. The distribution of labeling is shifted to 
 # subset the fractions dataset for the current compound
 glucose.position.plot <- position_plotting %>%
     filter(isotope=="13C")%>%
-    #filter(!Position==0)%>%
+    filter(!Position==0)%>%
     filter(Compound=="Glucose")%>%
   
     ggplot(aes(x = Position, y=mean, fill=treatment, color=treatment)) + 
@@ -3161,11 +3208,11 @@ glucose.position.plot <- position_plotting %>%
     xlab("Number Carbons Labeled")+
     scale_x_continuous(breaks = seq(0, 20, 1))+
   
-    geom_text(label="CxT=0.004", x=4, y=0.6, color="black", size=6)+
+    geom_text(label="CxT=0.004", x=4, y=0.3, color="black", size=6)+
     geom_text(label="**", x=1, y=0.085, color="black", size=6)+
     geom_text(label="*", x=2, y=0.115, color="black", size=6)+
   
-    ylim(0,0.8)+
+    ylim(0,0.35)+
   
     theme(
       axis.text=element_text(color="black", size=12), 
