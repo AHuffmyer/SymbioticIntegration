@@ -78,8 +78,10 @@ Display mean temperatures during settlement period.
 temps%>% filter(DateTime > as.POSIXct("2021-06-19 08:00:00"))%>% group_by(Treatment)%>%summarise(mean=mean(Temp),sd=sd(Temp),se=std.error(Temp))
 ```
 
-
-
+Display values during exposure period .
+```{r}
+temps%>% filter(DateTime > as.POSIXct("2021-06-15 08:00:00"))%>% filter(DateTime < as.POSIXct("2021-06-18 18:30:00"))%>% group_by(Treatment)%>%summarise(max=max(Temp))
+```
 
 
 
