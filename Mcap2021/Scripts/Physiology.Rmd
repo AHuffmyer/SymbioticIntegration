@@ -47,13 +47,13 @@ library(lattice)
 library(Rmisc)
 library(ggpubr)
 library(lsmeans)
-library(tidyverse)
 library(car)
 library(kableExtra)
 library(ggcorrplot)
 library(corrr)
 library(GGally)
 library(cowplot)
+library(tidyverse)
 ```
 
 
@@ -1041,6 +1041,14 @@ carb.host.prot <- df_carbs%>%
   geom_text(x=1.5, y=0, label="p=0.094", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (ug ug protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.host.prot 
+
+#calculate percent change
+df_carbs%>%
+  filter(Fraction=="Host")%>%
+  dplyr::group_by(Treatment)%>%
+  dplyr::summarise(mean=mean(Carb.prot, na.rm=TRUE))%>%
+  pivot_wider(values_from=mean, names_from=Treatment)%>%
+  mutate(perc_diff=((High-Ambient)/Ambient)*100)
 ```
 
 Plot holobiont carbohydrates across temperatures.   
