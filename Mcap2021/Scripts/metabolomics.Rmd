@@ -3503,12 +3503,20 @@ pool_vs_enrichment_change2<-master_treatment%>%
   geom_vline(xintercept=0, linetype="dashed")+
   #geom_abline(intercept = 0, slope = 1, color="red")+
   geom_text(aes(label=ifelse(abs(change_enrichment)>1,as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
-  geom_text(aes(label=ifelse(abs(change_pool)>0.5,as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  geom_text(aes(label=ifelse(abs(change_pool)>0.7,as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(change_pool< -0.2,as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Glucose",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Arginine-Glutamine",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Pyruvate",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Glucose-6-phosphate",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Fructose-6-phosphate",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Glutamine",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
+  #geom_text(aes(label=ifelse(Compound=="Glutamate",as.character(Compound),'')),hjust=-0.1,vjust=0, color="black")+
   theme_classic()+
   geom_text(x=-0.45, y=8, label="More abundant \nat Ambient", color="black", size=4)+
   geom_text(x=1.1, y=8, label="More abundant \nat High", color="black", size=4)+
-  geom_text(x=-0.75, y=-3.5, label="More enriched \nat Ambient", color="blue", size=4, angle=90)+
-  geom_text(x=-0.75, y=4, label="More enriched \nat High", color="red", size=4, angle=90)+
+  geom_text(x=-0.75, y=-3.5, label="More enriched \nat Ambient", color="black", size=4, angle=90)+
+  geom_text(x=-0.75, y=4, label="More enriched \nat High", color="black", size=4, angle=90)+
   ylab("Relative Change in Enrichment")+
   xlab("Relative Change in Pool Size")+
   theme(
@@ -3518,6 +3526,12 @@ pool_vs_enrichment_change2<-master_treatment%>%
   );pool_vs_enrichment_change2
 
 ggsave("Mcap2021/Figures/Metabolomics/change_enrichment_vs_poolsize_noacids.jpeg", plot=pool_vs_enrichment_change2, width=8, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/change_enrichment_vs_poolsize_noacids.pdf", plot=pool_vs_enrichment_change2, width=8, height=6)
+
+#view the coordinates for manual labeling 
+table<-master_treatment%>%
+  select(Compound, change_pool, change_enrichment)%>%
+  filter(Compound %in% c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Glutamine", "Glutamate", "Citrulline", "Citrate", "Aspartate", "Arginine-Glutamine"));table
 ```
 
 ### Pool size vs labeling change 
