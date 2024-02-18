@@ -1029,6 +1029,7 @@ C13_vip_diff_plot<-C13_vip_metabolites%>%
   xlab("VIP Metabolite")+
   ggtitle("VIP Difference - C13")+
   theme_classic()+
+  ylim(-0.75,2)+
   theme(
     axis.text=element_text(color="black", size=12), 
     axis.text.x=element_text(angle=45, hjust=1), 
@@ -1038,7 +1039,8 @@ C13_vip_diff_plot<-C13_vip_metabolites%>%
     legend.title=element_text(size=12, face="bold")
   );C13_vip_diff_plot
 
-ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.jpg", C13_vip_diff_plot, width=11, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.jpg", C13_vip_diff_plot, width=13, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.pdf", C13_vip_diff_plot, width=13, height=6)
 
 #view mean values for each metabolite
 C13_vip_diff_sum<-C13_vip_metabolites%>%
@@ -2129,7 +2131,8 @@ enrich_vip_diff_plot<-enrich_vip_metabolites%>%
     legend.title=element_text(size=12, face="bold")
   );enrich_vip_diff_plot
 
-ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.jpg", enrich_vip_diff_plot, width=11, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.jpg", enrich_vip_diff_plot, width=13, height=6)
+ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.pdf", enrich_vip_diff_plot, width=13, height=6)
 
 #export means
 enrich_vip_diff_sum<-enrich_vip_metabolites%>%
