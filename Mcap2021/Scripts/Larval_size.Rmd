@@ -265,3 +265,19 @@ size %>%
     write_csv("Mcap2021/Output/mean_size.csv")
 ```
 
+# Calculate measurement uncertainty
+
+```{r}
+head(size)
+
+mean<-size%>%summarise(mean=mean(volume.mm3, na.rm=TRUE))
+mean<-mean[1, 1]
+
+uncertainty<-size%>%
+  mutate(squares=(volume.mm3-mean)^2)%>%
+  summarise(mean_squares=mean(squares))%>%
+  summarise(uncertainty=sqrt(mean_squares))
+  
+uncertainty
+```
+
