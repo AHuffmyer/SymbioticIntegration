@@ -1,0 +1,118 @@
+---
+title: "Analyzing larval daily measurement data"
+author: "Ariana S Huffmyer"
+date: "2023"
+output: 
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 6
+    toc_float: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+This script reads and plots environmental data from daily measurements. We are using this for pH and salinity. Temperature is analyzed from temperature loggers in the Temperature_analysis.Rmd script.  
+
+Data was taken multiple times throughout one treatment period day.  
+
+# Set Up    
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(stringr)
+library(readxl)
+library(purrr)
+library(lubridate)
+library(ggplot2)
+library(seacarb)
+library(broom)
+library(cowplot)
+```
+
+# Daily measurements  
+
+## Read in file  
+
+Read in daily measurements file.  
+
+```{r}
+daily<-read_csv("Mcap2021/Data/Environmental/Daily_Measurements/daily_measurements.csv")
+daily$Tank<-as.factor(daily$Tank)
+daily$Treatment<-as.factor(daily$Treatment)
+daily$tris.date<-as.character(daily$tris.date)
+```
+
+## Calculate total pH  
+
+Calculate the calibration curve from the Tris calibration and calculate pH on the total scale from pH.mV.   
+```{r}
+pHcalib<-read_csv("Mcap2021/Data/Environmental/Daily_Measurements/Tris_Calibration.csv")
+pHcalib$tris.date<-as.character(pHcalib$tris.date)
+
+pHSlope<-pHcalib %>%
+  nest_by(tris.date)%>%
+  mutate(fitpH = list(lm(mVTris~Ttris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
+  reframe(broom::tidy(fitpH)) %>% # make the output tidy
+  select(tris.date, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate) %>%# put slope and intercept in their own column
+  left_join(daily, ., by="tris.date") %>% # join with the pH sample data
+  mutate(mVTris = Temp.C*Ttris + `(Intercept)`) %>%# calculate the mV of the tris at temperature in which the pH of the tanks were measured
+  mutate(pH.total = pH(Ex=pH.mV, Etris=mVTris, S=Sal.ppt, T=Temp.C)) # calculate pH of the tanks using the pH seacarb function
+```
+
+pH is now calculated as Total pH in the "pH" column. Now select the desired columns to analyze further.  
+```{r}
+daily_calc<-pHSlope%>%
+  select(Date, Tank, Treatment, Time, Temp.C, Sal.ppt, pH.total, Light.PAR)
+```
+
+## Change to long format
+
+Change data format to long format 
+```{r}
+daily_calc.long <-daily_calc %>% pivot_longer(cols=Temp.C:Light.PAR,
+  names_to = "metric",
+  values_to = "value")
+```
+
+## Plot metrics of interest  
+
+Plot by tank colored by tank.      
+```{r}
+daily_tanks<-daily_calc.long %>%
+  ggplot(aes(x=Tank, y=value, colour=Treatment))+
+  geom_point(size=2, position=position_dodge(0.3))+
+  xlab("Tank")+
+  facet_grid(metric ~ ., scales = "free")+
+  theme_classic(); daily_tanks
+
+```
+
+## Summarize daily measurements  
+
+Calculate descriptive statistics   
+```{r}
+daily_calc.short<-daily_calc.long%>%
+  pivot_wider(names_from=metric, values_from=value)
+
+summary<-daily_calc.short%>%
+  select(!Date)%>%
+  select(!Time)%>%
+  select(!Tank)%>%
+  group_by(Treatment)%>%
+  dplyr::summarise(across(everything(), list(mean = mean, sd = sd), na.rm = TRUE)); summary
+
+summary<-daily_calc.short%>%
+  select(!Date)%>%
+  select(!Time)%>%
+  select(!Tank)%>%
+  select(!Treatment)%>%
+  dplyr::summarise(across(everything(), list(mean = mean, sd = sd), na.rm = TRUE)); summary
+
+length(daily_calc.short$Temp.C)
+```

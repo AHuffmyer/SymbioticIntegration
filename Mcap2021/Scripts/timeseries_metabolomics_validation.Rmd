@@ -315,7 +315,7 @@ mcap_plot2<-pool_plotting%>%
   
     ggplot(aes(x = treatment, y = mean)) + 
     facet_wrap(~Compound)+
-    geom_bar(stat="identity", aes(group=treatment), fill="white", color="darkgray", position=position_dodge(), linewidth=1) + 
+    #geom_bar(stat="identity", aes(group=treatment), fill="white", color="darkgray", position=position_dodge(), linewidth=1) + 
   geom_point(data=full_data, aes(y=log.intensity.norm, x=treatment, fill=treatment), size=1)+
     theme_classic()+
     ylab("Pool Size")+
@@ -441,7 +441,7 @@ mcap_plot4<-enrich_plotting%>%
   
     ggplot(aes(x = treatment, y = mean)) + 
     facet_wrap(~Compound)+
-    geom_bar(stat="identity", aes(group=treatment), fill="white", position=position_dodge(), linewidth=1, color="darkgray") + 
+    #geom_bar(stat="identity", aes(group=treatment), fill="white", position=position_dodge(), linewidth=1, color="darkgray") + 
   geom_point(data=full_data, aes(y=enrichment, x=treatment, fill=treatment), size=1)+
     theme_classic()+
     ylab("Enrichment")+
