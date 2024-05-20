@@ -415,7 +415,7 @@ ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_carbon.jpg", plo
 
 ```{r}
 pool_ammonia_metabolites<-pool_size_plotting%>%
-  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetylglutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate", "Arginino-succinate", "Arginine", "Ornithine", "Glutamine-arginine"))%>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate",  "Arginine", "Ornithine", "Arginine-Glutamine", "L-arginino-succinate"))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
@@ -435,7 +435,7 @@ pool_ammonia_metabolites<-pool_size_plotting%>%
     axis.title = element_text(face="bold")
     );pool_ammonia_metabolites
 
-ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_nitrogen.jpg", plot=pool_ammonia_metabolites, width=5, height=5)
+ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_nitrogen.jpg", plot=pool_ammonia_metabolites, width=7, height=5)
 ```
 
 Plot a stress metabolite - methionine sulfoxide. 
@@ -470,7 +470,7 @@ ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_methioninesulfox
 
 Set list of metabolites of interest for testing. 
 ```{r}
-control_list<-c("Methionine sulfoxide","Glutamate", "Glutamine", "a-ketoglutarate", "N-acetylglutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate", "Arginino-succinate", "Arginine", "Ornithine", "Glutamine-arginine", "Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate")
+control_list<-c("Methionine sulfoxide","Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate", "L-arginino-succinate", "Arginine", "Ornithine", "Arginine-Glutamine", "Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate")
 ```
 
 Calculate difference in labeling between isotope for these key metabolites. 
@@ -522,8 +522,6 @@ pool_size%>%
   mutate(perc_change_12vs13=((`13C`-`12C`)/`13C`)*100)
 ```
 Citrate (28% higher), Isocitrate (32% higher), Methionine Sulfoxide (70% higher) are higher in C13, Succinate is lower in C13 (15% lower). 
-
-Perhaps this is showing slight stress (methionine sulfoxide?) and slight changes in TCA cycle? Look at this more with enrichment data.  
 
 # Is metabolite pool size different between temperature treatments? 
 
@@ -651,8 +649,6 @@ treatment_cols<-c("blue", "red")
 pdf("Mcap2021/Figures/Metabolomics/PLSDA_C13.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda_C13, col=treatment_cols, ind.names = FALSE, legend=TRUE, legend.title = "Treatment - C13 Samples", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
-
-#plotIndiv(MyResult.plsda_C13, col=treatment_cols, ind.names = FALSE, legend=TRUE, legend.title = "Treatment - C13 Samples", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 ```
 
 View the VIP metabolites that are most highly differentiating metabolites between treatments.     
@@ -918,7 +914,7 @@ Plot glucose individually.
     theme_classic()+
     ylab("Pool Size")+
   
-    geom_text(label="*", x=1.5, y=3.3, size=8)+ 
+    geom_text(label="VIP=1.22", x=1.5, y=4, size=8)+ 
   
     xlab("")+
     ylim(0, 5)+
@@ -1205,7 +1201,7 @@ ggsave("Mcap2021/Figures/Metabolomics/Controls/enrichment_darkvslight_carbon.jpg
 
 ```{r}
 dark_ammonia_metabolites<-dark_plotting%>%
-  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetylglutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate", "Arginino-succinate", "Arginine", "Ornithine", "Glutamine-arginine"))%>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Citrulline", "Aspartate", "L-arginino-succinate", "Arginine", "Ornithine", "Arginine-Glutamine"))%>%
          
   ggplot(., aes(y=mean, x=reorder(Compound, -mean), fill=isotope, group=isotope)) + 
   geom_bar(stat="identity", position=position_dodge())+ #change to change boxplot width
@@ -1219,6 +1215,9 @@ dark_ammonia_metabolites<-dark_plotting%>%
   geom_text(x=2, y=0.19, label="**", colour="black", size=5)+
   geom_text(x=3, y=0.13, label="**", colour="black", size=5)+
   geom_text(x=4, y=0.13, label="**", colour="black", size=5)+
+  geom_text(x=6, y=0.13, label="**", colour="black", size=5)+
+  geom_text(x=7, y=0.11, label="**", colour="black", size=5)+
+  geom_text(x=8, y=0.10, label="*", colour="black", size=5)+
   ylim(0,0.3)+
   theme(
     legend.position="right", 
@@ -1233,7 +1232,7 @@ dark_ammonia_metabolites<-dark_plotting%>%
 ggsave("Mcap2021/Figures/Metabolomics/Controls/enrichment_darkvslight_nitrogen.jpg", plot=dark_ammonia_metabolites, width=8, height=5)
 ```
 
-GS-GOGAT metabolites are much higher in light. Citrulline is the only one with more label in dark. 
+GS-GOGAT metabolites are much higher in light. Citrulline and L-arginino-succinate are the only ones with more label in dark. 
 
 Note that these compounds do have some label - but this is expected. The larvae were not dark adapted before the incubations, so the residual label incorporation is likely due to residual photosynthetic and metabolic activity at the start of the dark treatment. Some of the urea cycle metabolites may be due to host uptake - look into this more. 
 
@@ -1278,6 +1277,28 @@ enrichment%>%
   group_by(Compound)%>%
   pivot_wider(names_from=isotope, values_from=mean)%>%
   mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)
+
+enrichment%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
+  ungroup()%>%
+  summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
+
+enrichment%>%
+  group_by(Compound, isotope)%>%
+  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  arrange(Compound)%>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Aspartate", "Arginine-Glutamine"))%>%
+  group_by(Compound)%>%
+  pivot_wider(names_from=isotope, values_from=mean)%>%
+  mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
+  ungroup()%>%
+  summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
 ```
 
 Export mean values for all metabolites in light, C12, and dark. 
@@ -1315,7 +1336,7 @@ enrichment%>%
   group_by(isotope)%>%
   summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
 ```
-Ornithine is not significant, Citrulline is not significant, Carbamoyl phosphate has no label, Arginine is not significant. All others are P<0.001. 
+Ornithine is not significant, Citrulline is not significant, Carbamoyl phosphate has no label, Arginine is not significant. All others are significant. 
 
 ## PLSDA and VIP analysis 
 
@@ -1638,6 +1659,8 @@ Plot Glucose specifically.
     ylab("Enrichment")+
     xlab("")+
     ylim(0,0.8)+
+  
+  geom_text(label="VIP<1", x=1.5, y=0.65, size=8, colour="darkgray")+
   
     theme(
       axis.text=element_text(color="black", size=12), 
