@@ -6,6 +6,13 @@ This repository contains data and scripts for an experiment testing the effects 
 
 EXPERIMENTAL OVERVIEW 
 
+<img width="469" alt="Screenshot 2024-05-21 at 14 54 24" src="https://github.com/AHuffmyer/SymbioticIntegration/assets/32178010/c474484c-acb1-4b71-8bb3-85a80a35efb4">
+
+DATA TYPES 
+
+<img width="520" alt="Screenshot 2024-05-21 at 14 54 31" src="https://github.com/AHuffmyer/SymbioticIntegration/assets/32178010/092598cc-dc5d-47d2-a443-f55376607608">
+
+
 # Repository contents 
 
 ## Mcap2021
