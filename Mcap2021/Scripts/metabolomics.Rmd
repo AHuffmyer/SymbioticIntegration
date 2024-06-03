@@ -1730,8 +1730,10 @@ Run a mixed effect model in a loop for each compound with sample as a random int
 compound_list<-levels(fractions$Compound)
 ```
 
-First, remove any metabolites that have no label incorporation. 
+First, remove any metabolites that have no label incorporation (0% enrichment in all samples).  
 ```{r}
+zero_metabolites<-c("Carbamoyl phosphate", "Creatinine", "Glycerate", "Hydroxyproline", "Hypotaurine", "Hypoxanthine", "N-Acetylputrescine", "N-carbomoyl-L-aspartate", "NG-dimethyl-L-arginine", "S-adenosyl-L-homocysteine", "Thiamine", "Thymine", "Uric acid")
+
 fraction_position<-fractions%>%
   filter(!Compound %in% zero_metabolites)%>%
   filter(isotope=="13C")%>%
@@ -2050,9 +2052,7 @@ master<-left_join(pool_size, enrichment)
 master<-master%>%
   filter(isotope=="13C")
 
-master<-left_join(master, prop_fractions, by=c("sample", "Compound", "treatment"))
 master<-master%>%
-  select(!check)%>%
   select(!isotope)%>%
   select(!tank)%>%
   select(!tube)
@@ -2065,20 +2065,17 @@ str(master)
 
 We have 90 metabolites, 12 samples, and 2 treatments, as expected. 
 
-Next create a master_wide data frame in order to calcluate relative change in pool size, enrichment, and labeling for each metabolite between high and ambient temperatures. We can the plot both raw values and relative change values.  
+Next create a master_wide data frame in order to calculate relative change in pool size, enrichment, and labeling for each metabolite between high and ambient temperatures. We can the plot both raw values and relative change values.  
 
 ```{r}
 master_treatment<-master%>%
   select(!intensity.norm)%>%
-  select(!unlabeled)%>%
   group_by(Compound, treatment)%>%
   summarize(mean_log.intensity.norm = mean(log.intensity.norm, na.rm=TRUE),
-            mean_enrichment = mean(enrichment, na.rm=TRUE), 
-            mean_labeling = mean(labeled, na.rm=TRUE))%>%
-  pivot_wider(names_from=treatment, values_from=(c(mean_log.intensity.norm, mean_enrichment, mean_labeling)))%>%
+            mean_enrichment = mean(enrichment, na.rm=TRUE))%>%
+  pivot_wider(names_from=treatment, values_from=(c(mean_log.intensity.norm, mean_enrichment)))%>%
   mutate(change_pool=((mean_log.intensity.norm_High-mean_log.intensity.norm_Ambient)/mean_log.intensity.norm_Ambient),
-         change_enrichment=((mean_enrichment_High-mean_enrichment_Ambient)/mean_enrichment_Ambient),
-         change_labeling=((mean_labeling_High-mean_labeling_Ambient)/mean_labeling_Ambient))
+         change_enrichment=((mean_enrichment_High-mean_enrichment_Ambient)/mean_enrichment_Ambient))
 ```
 
 We will have NA's in change values for enrichment and labeling in metabolites that do not have any label incorporation as expected.  
