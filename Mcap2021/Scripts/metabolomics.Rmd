@@ -681,7 +681,7 @@ VIP_list_plot_C13<-treatment_VIP_1 %>%
 ggsave("Mcap2021/Figures/Metabolomics/VIP_List_C13.jpg", VIP_list_plot_C13, width=4, height=6)
 
 #save VIP values 
-treatment_VIP_1 %>%
+treatment_VIP_table %>%
   arrange(VIP) %>%
   write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_poolsize.csv")
 ```
@@ -1401,7 +1401,7 @@ VIP_list_plot_enrich<-enrich_VIP_1 %>%
 ggsave("Mcap2021/Figures/Metabolomics/VIP_List_enrichment.jpg", VIP_list_plot_enrich, width=4, height=6)
 
 #save VIP values 
-enrich_VIP_1 %>%
+enrich_VIP_table %>%
   arrange(VIP) %>%
   write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_enrichment.csv")
 ```
