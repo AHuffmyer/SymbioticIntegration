@@ -812,6 +812,7 @@ pr_plot_size_2<-PRdata %>%
 full_fig_size<-plot_grid(r_plot_size, p_plot_size, gp_size_plot, pr_size_plot, ncol=4, nrow=1, rel_heights= c(1,1,1,1), rel_widths = c(1,1,1,1.4), label_y=1, align="h", labels=c("A", "B", "C", "D"), label_size=18)
 
 ggsave(filename="Mcap2021/Figures/Respiration/respirometry_size_fig.png", plot=full_fig_size, dpi=500, width=18, height=6, units="in")
+ggsave(filename="Mcap2021/Figures/Respiration/respirometry_size_fig.pdf", plot=full_fig_size, dpi=500, width=18, height=6, units="in")
 ```
 
 
