@@ -56,7 +56,6 @@ library(cowplot)
 library(tidyverse)
 ```
 
-
 # Set plot theme 
 
 ```{r}
@@ -317,6 +316,12 @@ sym_plot <- df_cells%>%
   geom_text(x=1.5, y=0, label="p=0.345", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Symbiont Density (cells µg host protein"^-1, ")"))))+
   custom_theme; sym_plot 
+
+# output data for supplement 
+df_cells%>%
+  filter(!Sample.ID=="H")%>%
+  select(TubeID.x, Sample.ID, Treatment, cells.ugprotein)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS3a_data.csv")
 ```
 
 # Chlorophyll 
@@ -616,6 +621,11 @@ chl_prot_plot <- df_chl%>%
   geom_text(x=1.5, y=0, label="p=0.225", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (µg µg host protein"^-1, ")"))))+
   custom_theme; chl_prot_plot 
+
+# output data for supplement 
+df_chl%>%
+  select(Sample.ID, Tube.ID, Treatment, total.chl.ug.protein.ug)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS3b_data.csv")
 ```
 
 ## Normalize to cell density  
@@ -756,12 +766,12 @@ chl_cells_plot <- df_chl%>%
   geom_text(x=1.5, y=0, label="p=0.705", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (µg cell"^-1, ")"))))+
   custom_theme; chl_cells_plot 
+
+# output data for supplement 
+df_chl%>%
+  select(Sample.ID, Tube.ID, Treatment, total.chl.ug.cell)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS3c_data.csv")
 ```
-
-
-
-
-
 
 # Carbohydrates 
 
@@ -998,6 +1008,13 @@ df_carbs%>%
   dplyr::summarise(mean=mean(Carb.prot, na.rm=TRUE))%>%
   pivot_wider(values_from=mean, names_from=Treatment)%>%
   mutate(perc_diff=((High-Ambient)/Ambient)*100)
+
+# output data for supplement 
+df_carbs%>%
+  filter(Fraction=="Host")%>%
+  filter(Carb.prot>0)%>%
+  select(Sample.ID, Treatment, Fraction, Carb.prot)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS3d_data.csv")
 ```
 
 Plot holobiont carbohydrates across temperatures.   
@@ -1113,7 +1130,6 @@ qqPlot(cells_data_model$carbs.cell)
 leveneTest(carbs.cell~Treatment, data=cells_data_model)
 ```
 
-
 ### Plotting 
 
 Plot carbs by fractions normalized to cell density.   
@@ -1132,6 +1148,13 @@ carbs.cell.host <- df_carbs%>%
   geom_text(x=1.5, y=0, label="p=0.784", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (µg cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.host 
+
+# output data for supplement 
+df_carbs%>%
+  filter(Fraction=="Host")%>%
+  filter(carbs.cell>0)%>%
+  select(Sample.ID, Treatment, Fraction, carbs.cell)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS3e_data.csv")
 ```
 
 ```{r}
@@ -1166,7 +1189,7 @@ carbs.cell.sym <- df_carbs%>%
   custom_theme; carbs.cell.sym 
 ```
 
-This is interesting, but the data is highly variable with over half as negative values. This is not reliable enough. 
+This is interesting, but the data is highly variable with over half as negative values. This is not reliable. A larger symbiont pellet is needed to reliably measure carbohydrate content.  
 
 # Correlations 
 
@@ -1326,7 +1349,6 @@ cor2<-master%>%
   theme(strip.text.x=element_text(face="bold", size=14)); cor2
 ```
 This is just saying that carbs is not different in total and therefore there are fewer carbs per cell in larvae with more symbionts. 
-
 
 # Generate final figure 
 
