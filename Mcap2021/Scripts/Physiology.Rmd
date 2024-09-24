@@ -313,7 +313,7 @@ sym_plot <- df_cells%>%
   ylim(0,2500)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
-  geom_text(x=1.5, y=0, label="p=0.345", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.345", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Symbiont Density (cells µg host protein"^-1, ")"))))+
   custom_theme; sym_plot 
 
@@ -618,7 +618,7 @@ chl_prot_plot <- df_chl%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,500)+
-  geom_text(x=1.5, y=0, label="p=0.225", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.225", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (µg µg host protein"^-1, ")"))))+
   custom_theme; chl_prot_plot 
 
@@ -763,7 +763,7 @@ chl_cells_plot <- df_chl%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.55)+
-  geom_text(x=1.5, y=0, label="p=0.705", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.705", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Total Chlorophyll (µg cell"^-1, ")"))))+
   custom_theme; chl_cells_plot 
 
@@ -996,7 +996,7 @@ carb.host.prot <- df_carbs%>%
   ylim(0,8)+
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
-  geom_text(x=1.5, y=0, label="p=0.094", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.094", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (µg µg protein"^-1, ")"))))+ #Axis titles
   custom_theme; carb.host.prot 
 
@@ -1076,12 +1076,6 @@ df_carbs<-left_join(df_carbs, cells)
 df_carbs$carbs.cell<-df_carbs$Carb.prot/df_carbs$cells.ugprotein
 ```
 
-Merge carb ratio data with carb concentration data. 
-```{r}
-ratio_df<-carb_ratio%>%select(Sample.ID, ratio)
-df_carbs<-left_join(df_carbs, ratio_df)
-```
-
 ### Statistical tests  
 
 Test for differences in host carbs per cell with a t test.   
@@ -1145,7 +1139,7 @@ carbs.cell.host <- df_carbs%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.015)+
-  geom_text(x=1.5, y=0, label="p=0.784", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.784", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Host Carbohydrates (µg cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.host 
 
@@ -1168,7 +1162,7 @@ carbs.cell.holo <- df_carbs%>%
    scale_fill_manual(values=c("blue", "red"))+
   scale_colour_manual(values=c("blue", "red"))+
   ylim(0,0.02)+
-  geom_text(x=1.5, y=0, label="p=0.169", color="darkgray", size=4)+
+  geom_text(x=1.5, y=0, label="P=0.169", color="darkgray", size=4)+
   xlab(expression(bold("Temperature"))) + ylab(expression(bold(paste("Holobiont Carbohydrates (ug cell"^-1, ")")))) + #Axis titles
   custom_theme; carbs.cell.holo 
 ```

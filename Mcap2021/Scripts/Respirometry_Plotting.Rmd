@@ -603,9 +603,9 @@ r_plot_size<-PRdata %>%
     ylab(expression(bold(paste("R (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     #scale_y_continuous(limits=c(0.5, -0.005), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(0, 1.5)+
-    geom_text(x=1.5, y=0.14, label="Treatment p=0.034", color="black", size=6)+
-    geom_text(x=1.5, y=0.07, label="Temperature p=0.120", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.00, label="Interaction p=0.519", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.14, label="Treatment P=0.034", color="black", size=6)+
+    geom_text(x=1.5, y=0.07, label="Temperature P=0.120", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.00, label="Interaction P=0.519", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -657,9 +657,9 @@ p_plot_size<-PRdata %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Net P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
-    geom_text(x=1.5, y=0.14, label="Treatment p=0.620", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.07, label="Temperature p=0.334", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.00, label="Interaction p=0.625", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.14, label="Treatment P=0.620", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.07, label="Temperature P=0.334", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.00, label="Interaction P=0.625", color="darkgray", size=6)+
     ylim(0, 1.5) +
     theme_classic() + 
     theme(
@@ -712,9 +712,9 @@ gp_size_plot<-PRdata %>%
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Gross P (nmol ", O[2], " mm"^-3, "min"^-1, ")")))) +
     ylim(0, 1.5) +
-    geom_text(x=1.5, y=0.14, label="Treatment p=0.133", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.07, label="Temperature p=0.089", color="darkgray", size=6)+
-    geom_text(x=1.5, y=0.0, label="Interaction p=0.398", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.14, label="Treatment P=0.133", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.07, label="Temperature P=0.089", color="darkgray", size=6)+
+    geom_text(x=1.5, y=0.0, label="Interaction P=0.398", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="none",
@@ -768,9 +768,9 @@ pr_size_plot<-PRdata %>%
     ylab(expression(bold(paste("P:R")))) +
     #scale_y_continuous(limits=c(0.8, 3), labels = scales::number_format(accuracy = 0.01, decimal.mark = '.'))+
     ylim(1, 2.8) +
-    geom_text(x=1.5, y=1.18, label="Treatment p=0.054", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1.09, label="Temperature p=0.484", color="darkgray", size=6)+
-    geom_text(x=1.5, y=1, label="Interaction p=0.926", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.18, label="Treatment P=0.054", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1.09, label="Temperature P=0.484", color="darkgray", size=6)+
+    geom_text(x=1.5, y=1, label="Interaction P=0.926", color="darkgray", size=6)+
     theme_classic() + 
     theme(
       legend.position="right",
@@ -782,7 +782,7 @@ pr_size_plot<-PRdata %>%
 
 #export data for supplement
 PRdata %>%
-  select(Date, Sample.ID, Chamber.ID, Plate, Tank, Treatment, Temperature, Type, Run, R.nmol.mm3.min, P.nmol.mm3.min, GP.nmol.mm3.min, ratio.size)%>%
+  dplyr::select(Date, Sample.ID, Chamber.ID, Plate, Tank, Treatment, Temperature, Type, Run, R.nmol.mm3.min, P.nmol.mm3.min, GP.nmol.mm3.min, ratio.size)%>%
   write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig4_data.csv")
 ```
 

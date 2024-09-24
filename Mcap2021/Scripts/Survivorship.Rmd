@@ -96,9 +96,9 @@ surv_plot2<-survival %>%
     scale_fill_manual(name="Rearing Treatment", values=c("blue","red"))+
     scale_color_manual(name="Rearing Treatment", values=c("blue","red"))+
     ylab(expression(bold(paste("Larvae mL" ^-1)))) +
-    geom_text(x=3.5, y=2, label="Treatment p=0.677", color="darkgray", size=5)+
-    geom_text(x=3.5, y=2.1, label="Time p=0.012", color="black", size=5)+
-    geom_text(x=3.5, y=1.9, label="Interaction p=0.986", color="darkgray", size=5)+
+    geom_text(x=3.5, y=2, label="Treatment P=0.677", color="darkgray", size=5)+
+    geom_text(x=3.5, y=2.1, label="Time P=0.012", color="black", size=5)+
+    geom_text(x=3.5, y=1.9, label="Interaction P=0.986", color="darkgray", size=5)+
     ylim(0, 2.2)+
     theme_classic() + 
     theme(
@@ -113,7 +113,7 @@ ggsave("Mcap2021/Figures/Survival.png", surv_plot2, dpi=300, w=5, h=5, units="in
 
 # output data for supplement 
 survival %>%
-  select(Timepoint, Date, Time, HoursExposure, Treatment, Tank, Replicate, Larvae.per.mL)%>%
+  dplyr::select(Timepoint, Date, Time, HoursExposure, Treatment, Tank, Replicate, Larvae.per.mL)%>%
   write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS2a_data.csv")
 ```
 
