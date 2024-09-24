@@ -8,6 +8,7 @@ editor_options:
 ---
 
 # Set Up  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
@@ -61,6 +62,11 @@ temp_plot<-ggplot(temps)+
       ); temp_plot
 
 ggsave(filename="Mcap2021/Figures/Temperatures.png", plot=temp_plot, dpi=300, width=9, height=5, units="in")
+
+# output file for supplement 
+temps%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS1_data.csv")
+
 ```
 
 Display mean temperatures during embryo rearing period. 

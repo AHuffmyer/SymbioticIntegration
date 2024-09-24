@@ -780,6 +780,10 @@ pr_size_plot<-PRdata %>%
       legend.text=element_text(size=14)
       ); pr_size_plot
 
+#export data for supplement
+PRdata %>%
+  select(Date, Sample.ID, Chamber.ID, Plate, Tank, Treatment, Temperature, Type, Run, R.nmol.mm3.min, P.nmol.mm3.min, GP.nmol.mm3.min, ratio.size)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig4_data.csv")
 ```
 
 Plot data as a box plot   

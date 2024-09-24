@@ -110,9 +110,12 @@ surv_plot2<-survival %>%
       ); surv_plot2
 
 ggsave("Mcap2021/Figures/Survival.png", surv_plot2, dpi=300, w=5, h=5, units="in")
+
+# output data for supplement 
+survival %>%
+  select(Timepoint, Date, Time, HoursExposure, Treatment, Tank, Replicate, Larvae.per.mL)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS2a_data.csv")
 ```
-
-
 
 # **Analysis**  
 
@@ -136,7 +139,6 @@ Conduct post hoc test.
 emm<-emmeans(survmodel, ~Treatment|Timepoint)
 cld(emm)
 ```
-
 
 Show summary of percent change in survival from start to end.  
 

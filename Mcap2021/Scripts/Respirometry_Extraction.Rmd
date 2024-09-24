@@ -14,10 +14,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-REVISE THIS CODE TO MAKE ACCURATE START/END TIMES 
-
-
-
 ## Setup  
 
 Set up workspace, set options, and load required packages.    

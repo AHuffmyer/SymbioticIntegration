@@ -115,6 +115,11 @@ settle_plot2<-settle %>%
       ); settle_plot2
 
 ggsave("Mcap2021/Figures/Settlement.png", settle_plot2, dpi=300, w=5, h=5, units="in")
+
+# output data for supplement 
+settle %>%
+  select(Date, DateTime, Time, Treatment, Tank, LarvaeStart, Settled)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS2b_data.csv")
 ```
 
 # **Analysis**  

@@ -1,0 +1,225 @@
+Compound,sample,isotope,treatment,tank,tube,enrichment
+Citrate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.25137286902641826
+Citrate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.25120676732723896
+Citrate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.308222266896038
+Citrate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.25486723002621914
+Citrate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.22491243819490606
+Citrate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.23379895024632844
+Citrate,13C_High-H1_I21,13C,High,H1,I21,0.2079672312524421
+Citrate,13C_High-H2_I22,13C,High,H2,I22,0.19774277784694758
+Citrate,13C_High-H3_I23,13C,High,H3,I23,0.26019219742263755
+Citrate,13C_High-H4_I24,13C,High,H4,I24,0.21780370349483458
+Citrate,13C_High-H5_I25,13C,High,H5,I25,0.22581121332780826
+Citrate,13C_High-H6_I26,13C,High,H6,I26,0.24909067925433306
+Citrate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.0771216759412391
+Citrate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.01914981520561616
+Citrate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.025002059022258192
+Citrate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.0560541748944052
+Glucose-6-phosphate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.20755618520515592
+Glucose-6-phosphate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.22417637707818952
+Glucose-6-phosphate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.22704640574751514
+Glucose-6-phosphate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.2330592827740258
+Glucose-6-phosphate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.1886410345098073
+Glucose-6-phosphate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.1936987361846977
+Glucose-6-phosphate,13C_High-H1_I21,13C,High,H1,I21,0.17229070875108454
+Glucose-6-phosphate,13C_High-H2_I22,13C,High,H2,I22,0.2118400850917125
+Glucose-6-phosphate,13C_High-H3_I23,13C,High,H3,I23,0.19166591696063562
+Glucose-6-phosphate,13C_High-H4_I24,13C,High,H4,I24,0.15951728031147452
+Glucose-6-phosphate,13C_High-H5_I25,13C,High,H5,I25,0.17815604659008064
+Glucose-6-phosphate,13C_High-H6_I26,13C,High,H6,I26,0.19122873939276422
+Glucose-6-phosphate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.011397229971659152
+Glucose-6-phosphate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.009434365089452414
+Glucose-6-phosphate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.007054207073605024
+Glucose-6-phosphate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.008217558970231416
+Isocitrate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.27139829208907534
+Isocitrate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.26932544789495066
+Isocitrate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.26215258816258075
+Isocitrate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.2678959046516726
+Isocitrate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.25356185790789487
+Isocitrate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.2596166067026854
+Isocitrate,13C_High-H1_I21,13C,High,H1,I21,0.24207367005841096
+Isocitrate,13C_High-H2_I22,13C,High,H2,I22,0.22535229793389897
+Isocitrate,13C_High-H3_I23,13C,High,H3,I23,0.27847600191917204
+Isocitrate,13C_High-H4_I24,13C,High,H4,I24,0.25008699343595414
+Isocitrate,13C_High-H5_I25,13C,High,H5,I25,0.2415832413211824
+Isocitrate,13C_High-H6_I26,13C,High,H6,I26,0.2654198659678141
+Isocitrate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.09510527770887485
+Isocitrate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.018872826585040345
+Isocitrate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.05700181128290824
+Isocitrate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.07216398044961352
+Fructose-6-phosphate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.18977678941790757
+Fructose-6-phosphate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.20996221910535173
+Fructose-6-phosphate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.21776464625240813
+Fructose-6-phosphate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.21957027238475302
+Fructose-6-phosphate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.17702991865497905
+Fructose-6-phosphate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.17620626764942235
+Fructose-6-phosphate,13C_High-H1_I21,13C,High,H1,I21,0.16725802079233595
+Fructose-6-phosphate,13C_High-H2_I22,13C,High,H2,I22,0.2092540197455893
+Fructose-6-phosphate,13C_High-H3_I23,13C,High,H3,I23,0.1791471044227491
+Fructose-6-phosphate,13C_High-H4_I24,13C,High,H4,I24,0.1548044756468925
+Fructose-6-phosphate,13C_High-H5_I25,13C,High,H5,I25,0.17579582283827624
+Fructose-6-phosphate,13C_High-H6_I26,13C,High,H6,I26,0.18257710314429262
+Fructose-6-phosphate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.007651338285611646
+Fructose-6-phosphate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.004709545884624764
+Fructose-6-phosphate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.0015000295934241333
+Fructose-6-phosphate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.010010586347511152
+Ribose phosphate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.08147577640758345
+Ribose phosphate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.09147260895798434
+Ribose phosphate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.07732242982658996
+Ribose phosphate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.08608410781757438
+Ribose phosphate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.06531530328039743
+Ribose phosphate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.07814600449830274
+Ribose phosphate,13C_High-H1_I21,13C,High,H1,I21,0.061780981425884104
+Ribose phosphate,13C_High-H2_I22,13C,High,H2,I22,0.0812878484408866
+Ribose phosphate,13C_High-H3_I23,13C,High,H3,I23,0.08388573543070257
+Ribose phosphate,13C_High-H4_I24,13C,High,H4,I24,0.07770863354567752
+Ribose phosphate,13C_High-H5_I25,13C,High,H5,I25,0.06477007535506839
+Ribose phosphate,13C_High-H6_I26,13C,High,H6,I26,0.08016609645028348
+Ribose phosphate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0
+Ribose phosphate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0
+Ribose phosphate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0
+Ribose phosphate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.01182908461474596
+Dihydroxyacetone phosphate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.182346944678899
+Dihydroxyacetone phosphate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.21421856821848403
+Dihydroxyacetone phosphate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.22813435200519608
+Dihydroxyacetone phosphate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.22084581084903374
+Dihydroxyacetone phosphate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.18669630153887887
+Dihydroxyacetone phosphate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.17569311247156982
+Dihydroxyacetone phosphate,13C_High-H1_I21,13C,High,H1,I21,0.14653360961989934
+Dihydroxyacetone phosphate,13C_High-H2_I22,13C,High,H2,I22,0.18768477660278501
+Dihydroxyacetone phosphate,13C_High-H3_I23,13C,High,H3,I23,0.18600728416225806
+Dihydroxyacetone phosphate,13C_High-H4_I24,13C,High,H4,I24,0.157825225459352
+Dihydroxyacetone phosphate,13C_High-H5_I25,13C,High,H5,I25,0.17445445583401029
+Dihydroxyacetone phosphate,13C_High-H6_I26,13C,High,H6,I26,0.17935554918339683
+Dihydroxyacetone phosphate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.002072643012817193
+Dihydroxyacetone phosphate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.0035468183405542053
+Dihydroxyacetone phosphate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.015223542538402851
+Dihydroxyacetone phosphate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0
+Glucose,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.17467527386466641
+Glucose,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.21099129407312875
+Glucose,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.21874696087016265
+Glucose,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.20147232480779556
+Glucose,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.1691940725726233
+Glucose,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.16255877504357782
+Glucose,13C_High-H1_I21,13C,High,H1,I21,0.194393009856662
+Glucose,13C_High-H2_I22,13C,High,H2,I22,0.2101836771421338
+Glucose,13C_High-H3_I23,13C,High,H3,I23,0.2311917903474475
+Glucose,13C_High-H4_I24,13C,High,H4,I24,0.15385807395100645
+Glucose,13C_High-H5_I25,13C,High,H5,I25,0.19381391992162136
+Glucose,13C_High-H6_I26,13C,High,H6,I26,0.1902870104531431
+Glucose,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0
+Glucose,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0
+Glucose,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.003301353513052599
+Glucose,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.0016888508743954833
+Malate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.0893397804617888
+Malate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.09102613149586704
+Malate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.08771682290108476
+Malate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.09634916836995477
+Malate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.08124087442022696
+Malate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.0668349843543786
+Malate,13C_High-H1_I21,13C,High,H1,I21,0.0919156894324953
+Malate,13C_High-H2_I22,13C,High,H2,I22,0.08827937692936921
+Malate,13C_High-H3_I23,13C,High,H3,I23,0.09942137939378141
+Malate,13C_High-H4_I24,13C,High,H4,I24,0.06907938136814672
+Malate,13C_High-H5_I25,13C,High,H5,I25,0.09643460492841356
+Malate,13C_High-H6_I26,13C,High,H6,I26,0.10146946728452666
+Malate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.005633523544895173
+Malate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.005980584849640309
+Malate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.009816264571184749
+Malate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.014196641306492185
+Succinate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.17448778786432823
+Succinate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.17153182850944207
+Succinate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.10692888507615278
+Succinate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.15263094591251072
+Succinate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.1623662261342199
+Succinate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.14939196610040806
+Succinate,13C_High-H1_I21,13C,High,H1,I21,0.14651621425378702
+Succinate,13C_High-H2_I22,13C,High,H2,I22,0.11157460786985746
+Succinate,13C_High-H3_I23,13C,High,H3,I23,0.1698411607723114
+Succinate,13C_High-H4_I24,13C,High,H4,I24,0.14774671751511628
+Succinate,13C_High-H5_I25,13C,High,H5,I25,0.14932924290631272
+Succinate,13C_High-H6_I26,13C,High,H6,I26,0.15008404668395123
+Succinate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.0037115086443059316
+Succinate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.006770737004087653
+Succinate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.00281412211870821
+Succinate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.005141628884217047
+a-ketoglutarate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.1032989150927619
+a-ketoglutarate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.11612618176503182
+a-ketoglutarate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.11085450840259654
+a-ketoglutarate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.11854744864368667
+a-ketoglutarate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.10010594040821826
+a-ketoglutarate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.09877921044357249
+a-ketoglutarate,13C_High-H1_I21,13C,High,H1,I21,0.1076414163010208
+a-ketoglutarate,13C_High-H2_I22,13C,High,H2,I22,0.12737340526643376
+a-ketoglutarate,13C_High-H3_I23,13C,High,H3,I23,0.11393302214189367
+a-ketoglutarate,13C_High-H4_I24,13C,High,H4,I24,0.09713074995777012
+a-ketoglutarate,13C_High-H5_I25,13C,High,H5,I25,0.10791470085686963
+a-ketoglutarate,13C_High-H6_I26,13C,High,H6,I26,0.10809272192434534
+a-ketoglutarate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.013014327396990433
+a-ketoglutarate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.010008776699898702
+a-ketoglutarate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.01768478354006717
+a-ketoglutarate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.012176561248101521
+Lactate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.15302356222694308
+Lactate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.18137434272665284
+Lactate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.08935184839786946
+Lactate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.10766253324763796
+Lactate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.11406742634919091
+Lactate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.13577152082064242
+Lactate,13C_High-H1_I21,13C,High,H1,I21,0.11845359118684018
+Lactate,13C_High-H2_I22,13C,High,H2,I22,0.024834956724963286
+Lactate,13C_High-H3_I23,13C,High,H3,I23,0.11569351467202342
+Lactate,13C_High-H4_I24,13C,High,H4,I24,0.03191719015875479
+Lactate,13C_High-H5_I25,13C,High,H5,I25,0.10767538380941809
+Lactate,13C_High-H6_I26,13C,High,H6,I26,0.09442343618112585
+Lactate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.001044838769219022
+Lactate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,4.576855243239294e-4
+Lactate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.002466505769488603
+Lactate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.003188188513627229
+Pyruvate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.19319270443651024
+Pyruvate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.22265767253036337
+Pyruvate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.19007400171855662
+Pyruvate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.2070218529119278
+Pyruvate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.18216397071404097
+Pyruvate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.1804307922349632
+Pyruvate,13C_High-H1_I21,13C,High,H1,I21,0.1619069973330374
+Pyruvate,13C_High-H2_I22,13C,High,H2,I22,0.18706979010081182
+Pyruvate,13C_High-H3_I23,13C,High,H3,I23,0.1770019047570898
+Pyruvate,13C_High-H4_I24,13C,High,H4,I24,0.1464141127895641
+Pyruvate,13C_High-H5_I25,13C,High,H5,I25,0.16345115732574875
+Pyruvate,13C_High-H6_I26,13C,High,H6,I26,0.19131592905607633
+Pyruvate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.0022984227023114282
+Pyruvate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.00853211363913553
+Pyruvate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.005490384620582475
+Pyruvate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.009889690725732337
+3-Phosphoglycerate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.2669433805436414
+3-Phosphoglycerate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.2878252495401175
+3-Phosphoglycerate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.23421745902088975
+3-Phosphoglycerate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.25426564672936763
+3-Phosphoglycerate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.21697943052938762
+3-Phosphoglycerate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.2321469605736306
+3-Phosphoglycerate,13C_High-H1_I21,13C,High,H1,I21,0.2443017282544272
+3-Phosphoglycerate,13C_High-H2_I22,13C,High,H2,I22,0.16594155935603364
+3-Phosphoglycerate,13C_High-H3_I23,13C,High,H3,I23,0.2700983969258262
+3-Phosphoglycerate,13C_High-H4_I24,13C,High,H4,I24,0.2161984099759419
+3-Phosphoglycerate,13C_High-H5_I25,13C,High,H5,I25,0.19134341719045914
+3-Phosphoglycerate,13C_High-H6_I26,13C,High,H6,I26,0.2218678007647735
+3-Phosphoglycerate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0.070119915043812
+3-Phosphoglycerate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0.003544957338935511
+3-Phosphoglycerate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0.01876733825579613
+3-Phosphoglycerate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0.08361490670586992
+Xylose-5-phosphate,13C_Ambient-A1_I1,13C,Ambient,A1,I1,0.1268590606946227
+Xylose-5-phosphate,13C_Ambient-A2_I2,13C,Ambient,A2,I2,0.1554355876398342
+Xylose-5-phosphate,13C_Ambient-A3_I3,13C,Ambient,A3,I3,0.17515271812584787
+Xylose-5-phosphate,13C_Ambient-A4_I4,13C,Ambient,A4,I4,0.18355406478639064
+Xylose-5-phosphate,13C_Ambient-A5_I5,13C,Ambient,A5,I5,0.12500218662082735
+Xylose-5-phosphate,13C_Ambient-A6_I6,13C,Ambient,A6,I6,0.13410943768404227
+Xylose-5-phosphate,13C_High-H1_I21,13C,High,H1,I21,0.32289176779197104
+Xylose-5-phosphate,13C_High-H2_I22,13C,High,H2,I22,0.08183375074643162
+Xylose-5-phosphate,13C_High-H3_I23,13C,High,H3,I23,0.13220036483158282
+Xylose-5-phosphate,13C_High-H4_I24,13C,High,H4,I24,0.3223937067741421
+Xylose-5-phosphate,13C_High-H5_I25,13C,High,H5,I25,0.10898725434886188
+Xylose-5-phosphate,13C_High-H6_I26,13C,High,H6,I26,0.14272116173108407
+Xylose-5-phosphate,Dark-13C_Ambient-Pool_I19,Dark-13C,Ambient,Pool,I19,0
+Xylose-5-phosphate,Dark-13C_Ambient-Pool_I20,Dark-13C,Ambient,Pool,I20,0
+Xylose-5-phosphate,Dark-13C_High-Pool_I39,Dark-13C,High,Pool,I39,0
+Xylose-5-phosphate,Dark-13C_High-Pool_I40,Dark-13C,High,Pool,I40,0

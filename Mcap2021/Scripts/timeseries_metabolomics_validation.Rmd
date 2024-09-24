@@ -455,11 +455,16 @@ mcap_plot4<-enrich_plotting%>%
     ); mcap_plot4
 
 ggsave(mcap_plot4, filename="Mcap2021/Figures/Metabolomics/timeseries_validation/enrichment_glycolysis_mcap.jpg", width=5, height=5)
+
+# output data for supplement 
+full_data%>%
+  filter(Compound %in% compound_list)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS7_data.csv")
 ```
 
 Label incorporation clearly increases over the course of the time series as expected - as metabolism progresses more and more of the metabolites will incorporate C13 that is fixed through photosynthesis. 
 
-Specifically, label incorporation reaches a maximum in glucose and glycolysis intermediates at 6 hours. This reflects our conclusion from pool size data that the optimal incubation time is between 3-6 hours when photosynthate metabolism and translocation reaches its peak. 
+Specifically, label incorporation reaches a maximum in glucose and glycolysis intermediates at 6 hours. This reflects our conclusion from pool size data that the optimal incubation time is between 3-6 hours when photosynthate metabolism and translocation reaches its peak.
 
 Glucose is highly labeled as expected due to translocation from the symbiont. Other compounds that increase over time but do not reach a peak (highest at 24 h) are glutamine and glutamate (nitrogen metabolism) and some amino acids. 
 
@@ -592,7 +597,7 @@ ggsave(pacuta_plot4, filename="Mcap2021/Figures/Metabolomics/timeseries_validati
 
 Glucose and metabolic intermediates are higher in the host. Pyruvate is higher in the symbiont fraction. The holobiont fraction ends to be between that of the host and symbiont. It may make the most sense to analyse only host and symbiont fractions. 
 
-# Explore metablite enrichment in host vs symbiont in Pocillopora damicornis larvae  
+# Explore metablite enrichment host vs symbiont in Pocillopora damicornis larvae  
 
 Subset to Pocillopora acuta larvae. 
 ```{r}

@@ -163,7 +163,7 @@ Plot pool size in descending order by isotope treatment.
 
 ```{r}
 #make summary table
-data_plotting<-plyr::ddply(pool_size, c("isotope", "Compound", "treatment"), summarise,
+data_plotting<-plyr::ddply(pool_size, c("isotope", "Compound", "treatment"), dplyr::summarise,
                 N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
                 mean = mean(log.intensity.norm, na.rm=TRUE),
                 sd   = sd(log.intensity.norm, na.rm=TRUE),
@@ -257,7 +257,6 @@ metab_compounds_temperature_acids<-data_plotting%>%
     axis.title = element_text(face="bold")
     );metab_compounds_temperature_acids
 ```
-It is interesting that there was higher production of Montiporic acids in the dark. 
 
 Plot remaining metabolites. 
 ```{r}
@@ -374,7 +373,7 @@ Plot metabolites of interest to investigate the differences in isotope treatment
 
 ```{r}
 #make summary table
-pool_size_plotting<-plyr::ddply(pool_size, c("Compound", "isotope"), summarise,
+pool_size_plotting<-plyr::ddply(pool_size, c("Compound", "isotope"), dplyr::summarise,
                 N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
                 mean = mean(log.intensity.norm, na.rm=TRUE),
                 sd   = sd(log.intensity.norm, na.rm=TRUE),
@@ -411,6 +410,13 @@ pool_photo_metabolites<-pool_size_plotting%>%
     );pool_photo_metabolites
 
 ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_carbon.jpg", plot=pool_photo_metabolites, width=8, height=5)
+
+# output for supplement 
+pool_size%>%
+  filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate"))%>%
+  filter(!isotope=="Dark-13C")%>%
+  select(Compound, sample, isotope, treatment, tank, tube, log.intensity.norm)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS5a_data.csv")
 ```
 
 ```{r}
@@ -436,6 +442,13 @@ pool_ammonia_metabolites<-pool_size_plotting%>%
     );pool_ammonia_metabolites
 
 ggsave("Mcap2021/Figures/Metabolomics/Controls/poolsize_isotope_nitrogen.jpg", plot=pool_ammonia_metabolites, width=7, height=5)
+
+# output for supplement 
+pool_size%>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Carbamoyl phosphate", "Citrulline", "Aspartate",  "Arginine", "Ornithine", "Arginine-Glutamine", "L-arginino-succinate"))%>%
+  filter(!isotope=="Dark-13C")%>%
+  select(Compound, sample, isotope, treatment, tank, tube, log.intensity.norm)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS5b_data.csv")
 ```
 
 Plot a stress metabolite - methionine sulfoxide. 
@@ -477,13 +490,13 @@ Calculate difference in labeling between isotope for these key metabolites.
 ```{r}
 #show for each compound 
 pool_size%>%
-  group_by(Compound, isotope)%>%
-  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
-  arrange(Compound)%>%
-  filter(Compound %in% control_list)%>%
-  group_by(Compound)%>%
+  dplyr::group_by(Compound, isotope)%>%
+  dplyr::summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  dplyr::arrange(Compound)%>%
+  dplyr::filter(Compound %in% control_list)%>%
+  dplyr::group_by(Compound)%>%
   pivot_wider(names_from=isotope, values_from=mean)%>%
-  mutate(perc_diff_12vs13=((`13C`-`12C`)/`12C`)*100)
+  dplyr::mutate(perc_diff_12vs13=((`13C`-`12C`)/`12C`)*100)
 ```
 
 Calculate average pool size for metabolites of interest and then all metabolites by isotope. 
@@ -492,7 +505,7 @@ pool_size%>%
   filter(Compound %in% control_list)%>%
   filter(!isotope=="Dark-13C")%>%
   group_by(isotope, Compound)%>%
-  summarise(mean = mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))
+  dplyr::summarise(mean = mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))
 
 #test difference in label by isotope for targets 
 test<-pool_size%>%
@@ -514,7 +527,7 @@ Show mean percent difference for each of these metabolites.
 pool_size%>%
   group_by(Compound, isotope)%>%
   filter(!isotope=="Dark-13C")%>%
-  summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
+  dplyr::summarise(mean = mean(log.intensity.norm, na.rm=TRUE))%>%
   arrange(Compound)%>%
   filter(Compound %in% c("Citrate", "Isocitrate", "Succinate", "Methionine sulfoxide"))%>%
   group_by(Compound)%>%
@@ -554,6 +567,13 @@ pcaPlot2<-ggplot2::autoplot(scaled.pca.12C, data=pool_size_pca_12C, frame.colour
         axis.title = element_text(size=18,  face="bold"));pcaPlot2
 
 ggsave("Mcap2021/Figures/Metabolomics/pca_treatment_12C.jpg", pcaPlot2, width=6, height=6)
+
+# output data for supplement 
+pool_size%>%
+  select(!intensity.norm)%>%
+  pivot_wider(names_from=Compound, values_from=log.intensity.norm)%>%
+  filter(isotope=="12C")%>%
+  write_csv("Mcap2021/Output/supp_data_for_figures_publication/FigS4a_data.csv")
 ```
 
 Run PERMANOVA. 
@@ -600,6 +620,13 @@ pcaPlot3<-ggplot2::autoplot(scaled.pca.13C, data=pool_size_pca_13C, frame.colour
         axis.title = element_text(size=18,  face="bold"));pcaPlot3
 
 ggsave("Mcap2021/Figures/Metabolomics/pca_treatment_13C.jpg", pcaPlot3, width=6, height=6)
+
+# output data for supplement 
+pool_size%>%
+  select(!intensity.norm)%>%
+  pivot_wider(names_from=Compound, values_from=log.intensity.norm)%>%
+  filter(isotope=="13C")%>%
+  write_csv("Mcap2021/Output/supp_data_for_figures_publication/FigS4b_data.csv")
 ```
 
 Run PERMANOVA. 
@@ -649,6 +676,15 @@ treatment_cols<-c("blue", "red")
 pdf("Mcap2021/Figures/Metabolomics/PLSDA_C13.pdf", width=9, height=6)
 plotIndiv(MyResult.plsda_C13, col=treatment_cols, ind.names = FALSE, legend=TRUE, legend.title = "Treatment - C13 Samples", ellipse = FALSE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
 dev.off() 
+
+#output data for supplement 
+
+pool_size%>%
+  dplyr::select(Compound, isotope, treatment, tank, log.intensity.norm)%>%
+  filter(isotope=="13C")%>%
+  spread(Compound, log.intensity.norm)%>%
+  write_csv("Mcap2021/Output/supp_data_for_figures_publication/Fig5a_data.csv")
+  
 ```
 
 View the VIP metabolites that are most highly differentiating metabolites between treatments.     
@@ -684,6 +720,11 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_List_C13.jpg", VIP_list_plot_C13, widt
 treatment_VIP_table %>%
   arrange(VIP) %>%
   write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_poolsize.csv")
+
+# output data to supplement 
+treatment_VIP_1 %>%
+    arrange(VIP) %>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS8a_data.csv")
 ```
 
 These lists represent VIPs that drive separation in treatment in the 13C samples.  
@@ -730,7 +771,7 @@ View a table with mean and SE pool size values for these metabolites at each tem
 C13_vip_metabolites_sum<-C13_vip_metabolites%>%
   group_by(Compound, treatment)%>%
   select(Compound, treatment, log.intensity.norm)%>%
-  summarise(mean=mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))%>%
+  dplyr::summarise(mean=mean(log.intensity.norm, na.rm=TRUE), se=sd(log.intensity.norm, na.rm=TRUE)/sqrt(length(log.intensity.norm)))%>%
   pivot_longer(cols=mean:se, values_to="value")%>%
   mutate(metric=paste(treatment, "_", name))%>%
   select(Compound, value, metric)%>%
@@ -759,7 +800,7 @@ Next plot the fold change ((high - ambient)/ambient) between ambient and high at
 C13_vip_diff_plot<-C13_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean_intensity=mean(log.intensity.norm))%>%
+  dplyr::summarise(mean_intensity=mean(log.intensity.norm))%>%
   reframe(fold_change=(mean_intensity-first(mean_intensity))/first(mean_intensity))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>% #remove zero values (comparing ambient to ambient)
 
@@ -787,11 +828,17 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_C13.pdf", C13_vip_diff_plot
 C13_vip_diff_sum<-C13_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean_intensity=mean(log.intensity.norm))%>%
+  dplyr::summarise(mean_intensity=mean(log.intensity.norm))%>%
   reframe(fold_change=(mean_intensity-first(mean_intensity))/first(mean_intensity))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)
 
 write.csv(C13_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_PoolSize_RelDiff.csv")
+
+#output data for supplement
+C13_vip_metabolites%>%
+  arrange(Compound)%>%
+  select(!intensity.norm)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig5b_data.csv")
 ```
 
 #### *Metabolites that are higher at high temperature:*   
@@ -799,7 +846,7 @@ write.csv(C13_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_PoolSize_RelD
 C13_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(log.intensity.norm))%>%
+  dplyr::summarise(mean=mean(log.intensity.norm))%>%
   group_by(Compound)%>%
   reframe(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>%
@@ -833,7 +880,7 @@ UMP
 C13_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(log.intensity.norm))%>%
+  dplyr::summarise(mean=mean(log.intensity.norm))%>%
   group_by(Compound)%>%
   reframe(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>%
@@ -865,7 +912,7 @@ compound_list<-pool_size%>%
 
 compound_list<-c(levels(as.factor(compound_list$Compound)))  
 
-pool_size_plotting<-plyr::ddply(pool_size, c("treatment", "Compound", "isotope"), summarise,
+pool_size_plotting<-plyr::ddply(pool_size, c("treatment", "Compound", "isotope"), dplyr::summarise,
                 N    = length(log.intensity.norm[!is.na(log.intensity.norm)]),
                 mean = mean(log.intensity.norm, na.rm=TRUE),
                 sd   = sd(log.intensity.norm, na.rm=TRUE),
@@ -931,6 +978,13 @@ ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/glucose_pool_size.jpeg"), 
 #view meanas
  glucose.pool.mean <- pool_size_plotting%>%
     filter(Compound=="Glucose");glucose.pool.mean
+ 
+# output data for supplement
+pool_size%>%
+  filter(isotope=="13C")%>%
+  filter(Compound=="Glucose")%>%
+  select(!intensity.norm)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig6a_data.csv")
 ```
 
 Conduct ANOVA test to look at differences in glucose pools between temperature treatments. 
@@ -997,7 +1051,7 @@ The distribution is skewed, due to the presence of C12 samples that do not incor
 ```{r}
 enrichment%>%
   group_by(isotope)%>%
-  summarise(mean=mean(enrichment, na.rm=TRUE))
+  dplyr::summarise(mean=mean(enrichment, na.rm=TRUE))
 ```
 
 Labeling is highest in the C13 samples as expected. 
@@ -1030,7 +1084,7 @@ Plot enrichment in descending order by temperature treatment.
 
 ```{r}
 #make summary table
-enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), summarise,
+enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), dplyr::summarise,
                 N    = length(enrichment[!is.na(enrichment)]),
                 mean = mean(enrichment, na.rm=TRUE),
                 sd   = sd(enrichment, na.rm=TRUE),
@@ -1086,6 +1140,10 @@ also_keep<-enrichment_pca_13C %>%
 
 enrichment_pca_13C<-cbind(also_keep, keep)
 
+# output data for supplement 
+enrichment_pca_13C%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS9_data.csv")
+
 enrichment.pca.13C<-prcomp(enrichment_pca_13C[c(6:82)],scale=TRUE, center=TRUE) 
 ```
 
@@ -1102,6 +1160,7 @@ pcaPlot_enrichment1<-ggplot2::autoplot(enrichment.pca.13C, data=enrichment_pca_1
         axis.title = element_text(size=18,  face="bold"));pcaPlot_enrichment1
 
 ggsave("Mcap2021/Figures/Metabolomics/enrichment_pca_treatment_13C.jpg", pcaPlot_enrichment1, width=6, height=6)
+
 ```
 
 Run PERMANOVA. 
@@ -1135,7 +1194,7 @@ We now need to compare enrichment of metabolites between dark and light treatmen
 
 ```{r}
 #make summary table
-dark_plotting<-plyr::ddply(enrichment, c("Compound", "isotope"), summarise,
+dark_plotting<-plyr::ddply(enrichment, c("Compound", "isotope"), dplyr::summarise,
                 N    = length(enrichment[!is.na(enrichment)]),
                 mean = mean(enrichment, na.rm=TRUE),
                 sd   = sd(enrichment, na.rm=TRUE),
@@ -1197,6 +1256,12 @@ dark_photo_metabolites<-dark_plotting%>%
     );dark_photo_metabolites
 
 ggsave("Mcap2021/Figures/Metabolomics/Controls/enrichment_darkvslight_carbon.jpg", plot=dark_photo_metabolites, width=8, height=5)
+
+# output data for supplement
+enrichment %>%
+  filter(Compound %in% c(c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate")))%>%
+  filter(!isotope=="12C")%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS6a_data.csv")
 ```
 
 ```{r}
@@ -1230,6 +1295,12 @@ dark_ammonia_metabolites<-dark_plotting%>%
     );dark_ammonia_metabolites
 
 ggsave("Mcap2021/Figures/Metabolomics/Controls/enrichment_darkvslight_nitrogen.jpg", plot=dark_ammonia_metabolites, width=8, height=5)
+
+# output data for supplement
+enrichment %>%
+  filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Citrulline", "Aspartate", "L-arginino-succinate", "Arginine", "Ornithine", "Arginine-Glutamine"))%>%
+  filter(!isotope=="12C")%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS6b_data.csv")
 ```
 
 GS-GOGAT metabolites are much higher in light. Citrulline and L-arginino-succinate are the only ones with more label in dark. 
@@ -1271,7 +1342,7 @@ Calculate average difference in labeling between isotope for these key metabolit
 #show for each compound 
 enrichment%>%
   group_by(Compound, isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE))%>%
   arrange(Compound)%>%
   filter(Compound %in% control_list)%>%
   group_by(Compound)%>%
@@ -1280,25 +1351,25 @@ enrichment%>%
 
 enrichment%>%
   group_by(Compound, isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE))%>%
   arrange(Compound)%>%
   filter(Compound %in% c("Glucose", "Fructose-6-phosphate", "Glucose-6-phosphate", "Pyruvate", "Dihydroxyacetone phosphate", "3-Phosphoglycerate", "Lactate", "Ribose phosphate", "Xylose-5-phosphate", "Citrate", "Isocitrate", "a-ketoglutarate", "Succinate", "Malate"))%>%
   group_by(Compound)%>%
   pivot_wider(names_from=isotope, values_from=mean)%>%
   mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
   ungroup()%>%
-  summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
+  dplyr::summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
 
 enrichment%>%
   group_by(Compound, isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE))%>%
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE))%>%
   arrange(Compound)%>%
   filter(Compound %in% c("Glutamate", "Glutamine", "a-ketoglutarate", "N-acetyl-glutamate", "Aspartate", "Arginine-Glutamine"))%>%
   group_by(Compound)%>%
   pivot_wider(names_from=isotope, values_from=mean)%>%
   mutate(perc_diff_13vsdark=((`13C`-`Dark-13C`)/`13C`)*100)%>%
   ungroup()%>%
-  summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
+  dplyr::summarise(mean=mean(perc_diff_13vsdark, na.rm=TRUE), se=sd(perc_diff_13vsdark, na.rm=TRUE)/length(perc_diff_13vsdark))
 ```
 
 Export mean values for all metabolites in light, C12, and dark. 
@@ -1306,7 +1377,7 @@ Export mean values for all metabolites in light, C12, and dark.
 #show for each compound 
 all_dark<-enrichment%>%
   group_by(Compound, isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/length(enrichment))
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/length(enrichment))
 
 write.csv(file="Mcap2021/Output/Metabolomics/dark_vs_light_all_metabolites.csv", all_dark)
 ```
@@ -1319,7 +1390,7 @@ enrichment%>%
   filter(Compound %in% control_list)%>%
   filter(!isotope=="12C")%>%
   group_by(isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
 
 #test difference in label by isotope for targets 
 test<-enrichment%>%
@@ -1334,7 +1405,7 @@ pairs(emm)
 
 enrichment%>%
   group_by(isotope)%>%
-  summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
+  dplyr::summarise(mean = mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))
 ```
 Ornithine is not significant, Citrulline is not significant, Carbamoyl phosphate has no label, Arginine is not significant. All others are significant. 
 
@@ -1367,6 +1438,14 @@ plotIndiv(MyResult.plsda_enrich, col=treatment_cols, ind.names = FALSE, legend=T
 dev.off() 
 
 #plotIndiv(MyResult.plsda_enrich, col=treatment_cols, ind.names = FALSE, legend=TRUE, legend.title = "Enrichment - C13 Samples", ellipse = TRUE, title="", style = "graphics", centroid=FALSE, point.lwd = 2, cex=2)
+
+#output data for supplement 
+
+enrichment%>%
+  dplyr::select(Compound, isotope, treatment, tank, enrichment)%>%
+  filter(isotope=="13C")%>%
+  spread(Compound, enrichment)%>%
+  write_csv("Mcap2021/Output/supp_data_for_figures_publication/Fig5c_data.csv")
 ```
 
 Variation between treatment is more than variation within treatment. 
@@ -1404,6 +1483,12 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_List_enrichment.jpg", VIP_list_plot_en
 enrich_VIP_table %>%
   arrange(VIP) %>%
   write_csv(file="Mcap2021/Output/Metabolomics/VIP_values_enrichment.csv")
+
+#output data for supplement 
+
+enrich_VIP_1 %>%
+  arrange(VIP) %>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS8b_data.csv")
 ```
 
 These lists represent VIPs that drive separation in enrichment by treatment in the 13C samples.  
@@ -1449,7 +1534,7 @@ View a table with mean and SE enrichment values for these metabolites at each te
 enrich_vip_metabolites_sum<-enrich_vip_metabolites%>%
   group_by(Compound, treatment)%>%
   select(Compound, treatment, enrichment)%>%
-  summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
+  dplyr::summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
   pivot_longer(cols=mean:se, values_to="value")%>%
   mutate(metric=paste(treatment, "_", name))%>%
   select(Compound, value, metric)%>%
@@ -1466,7 +1551,7 @@ enrich_all_metabolites<-enrichment%>%
 enrich_all_metabolites_sum<-enrich_all_metabolites%>%
   group_by(Compound, treatment)%>%
   select(Compound, treatment, enrichment)%>%
-  summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
+  dplyr::summarise(mean=mean(enrichment, na.rm=TRUE), se=sd(enrichment, na.rm=TRUE)/sqrt(length(enrichment)))%>%
   pivot_longer(cols=mean:se, values_to="value")%>%
   mutate(metric=paste(treatment, "_", name))%>%
   select(Compound, value, metric)%>%
@@ -1495,7 +1580,7 @@ Next plot the difference between ambient and high at the treatment level. Negati
 enrich_vip_diff_plot<-enrich_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(enrichment))%>%
+  dplyr::summarise(mean=mean(enrichment))%>%
   group_by(Compound)%>%
   reframe(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>% #remove zero values (comparing ambient to ambient)
@@ -1524,12 +1609,17 @@ ggsave("Mcap2021/Figures/Metabolomics/VIP_Difference_Enrichment.pdf", enrich_vip
 enrich_vip_diff_sum<-enrich_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(enrichment))%>%
+  dplyr::summarise(mean=mean(enrichment))%>%
   group_by(Compound)%>%
-  summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  dplyr::summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)
 
 write.csv(enrich_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_Enrichment_RelDiff.csv")
+
+#output data for supplement
+enrich_vip_metabolites%>%
+  arrange(Compound)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig5d_data.csv")
 ```
 
 #### *Metabolites that are more enriched at high temperature:*   
@@ -1538,9 +1628,9 @@ write.csv(enrich_vip_diff_sum, file="Mcap2021/Output/Metabolomics/VIP_Enrichment
 test<-enrich_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(enrichment))%>%
+  dplyr::summarise(mean=mean(enrichment))%>%
   group_by(Compound)%>%
-  summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  dplyr::summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>%
   filter(fold_change>0)%>%
   select(Compound)
@@ -1568,9 +1658,9 @@ Valine
 test<-enrich_vip_metabolites%>%
   arrange(Compound)%>%
   group_by(Compound, treatment)%>%
-  summarise(mean=mean(enrichment))%>%
+  dplyr::summarise(mean=mean(enrichment))%>%
   group_by(Compound)%>%
-  summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
+  dplyr::summarise(fold_change=(mean-first(mean))/first(mean))%>% #calculate the difference of high from ambient
   filter(fold_change !=0)%>%
   filter(fold_change<0)%>%
   select(Compound)
@@ -1609,7 +1699,7 @@ compound_list<-enrichment%>%
 
 compound_list<-c(levels(as.factor(compound_list$Compound)))  
 
-enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), summarise,
+enrichment_plotting<-plyr::ddply(enrichment, c("treatment", "Compound", "isotope"), dplyr::summarise,
                 N    = length(enrichment[!is.na(enrichment)]),
                 mean = mean(enrichment, na.rm=TRUE),
                 sd   = sd(enrichment, na.rm=TRUE),
@@ -1671,6 +1761,12 @@ Plot Glucose specifically.
     );glucose.enrichment.plot
   
 ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/glucose_enrichment.jpeg"), plot=glucose.enrichment.plot, width=2.3, height=4, units="in")
+
+#output data for supplement 
+enrichment%>%
+  filter(isotope=="13C")%>%
+  filter(Compound=="Glucose")%>%
+  write_csv("Mcap2021/Output/supp_data_for_figures_publication/Fig6b_data.csv")
 ```
 
 
@@ -1695,7 +1791,7 @@ fractions<-fractions%>%
   pivot_longer(cols=3:30, names_to="sample", values_to="label")%>%
   separate(sample, c("isotope", "treatment", "tube"), sep="_", remove = FALSE)%>%
   separate(treatment, c("treatment", "tank"), remove = TRUE)%>%
-  rename(Position=Label)
+  dplyr::rename(Position=Label)
 
 #convert to factors 
 fractions$Compound<-as.factor(fractions$Compound)
@@ -1902,7 +1998,7 @@ First generate means for metabolites with significant interactive effects from a
 compound_list <- c(levels(as.factor(fraction_position$Compound)))
 
 #calculate means of position label for each treatment
-position_plotting<-plyr::ddply(fractions, c("treatment","Position", "Compound", "isotope"), summarise,
+position_plotting<-plyr::ddply(fractions, c("treatment","Position", "Compound", "isotope"), dplyr::summarise,
                 N    = length(label[!is.na(label)]),
                 mean = mean(label, na.rm=TRUE),
                 sd   = sd(label, na.rm=TRUE),
@@ -1943,8 +2039,6 @@ ggsave(filename=paste0("Mcap2021/Figures/Metabolomics/position_plots/", compound
 
 }
 ```
-
-This generates some nice plots that we can look at! 
 
 In particular, we can look at those with significant position x temperature labeling:  
 
@@ -2011,6 +2105,13 @@ position_plotting %>%
     #filter(!Position==0)%>%
     filter(Compound=="Glucose")%>%
     arrange(Position)
+
+#output data for supplement 
+fractions%>%
+  filter(isotope=="13C")%>%
+  filter(!Position==0)%>%
+  filter(Compound=="Glucose")%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig6c_data.csv")
 ```
 
 Plot instead as a smooth line. 
@@ -2038,6 +2139,16 @@ glucose.position.plot2 <- fractions %>%
     );glucose.position.plot2
   
 
+```
+
+Output supplementary data for other compounds of interest. 
+```{r}
+#output data for supplement 
+fractions%>%
+  filter(isotope=="13C")%>%
+  filter(!Position==0)%>%
+  filter(Compound %in% c("Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Aconitate"))%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/FigS10_data.csv")
 ```
 
 # Correlations between pool size and enrichment and relationships between change in enrichment and change in pool size   
@@ -2208,4 +2319,10 @@ ggsave("Mcap2021/Figures/Metabolomics/change_enrichment_vs_poolsize_noacids.pdf"
 table<-master_treatment%>%
   select(Compound, change_pool, change_enrichment)%>%
   filter(Compound %in% c("Glucose", "Glucose-6-phosphate", "Fructose-6-phosphate", "Pyruvate", "Glutamine", "Glutamate", "Citrulline", "Citrate", "Aspartate", "Arginine-Glutamine"));table
+
+#export data for supplement
+master_treatment%>%
+  filter(!Compound=="Montiporic Acid C")%>%
+  select(Compound, change_pool, change_enrichment)%>%
+  write_csv(file="Mcap2021/Output/supp_data_for_figures_publication/Fig3b_data.csv")
 ```
