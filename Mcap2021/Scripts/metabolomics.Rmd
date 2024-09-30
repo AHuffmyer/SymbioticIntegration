@@ -1750,7 +1750,7 @@ Plot Glucose specifically.
     xlab("")+
     ylim(0,0.8)+
   
-  geom_text(label="VIP<1", x=1.5, y=0.65, size=8, colour="darkgray")+
+  geom_text(label="VIP=0.38", x=1.5, y=0.65, size=8, colour="darkgray")+
   
     theme(
       axis.text=element_text(color="black", size=12), 
